@@ -16,4 +16,10 @@ export default defineConfig({
       scss: {},
     },
   },
+  // served in Docker behind an external reverse proxy
+  preview: {
+    host: true,
+    port: 4173,
+    allowedHosts: true,
+  },
 })

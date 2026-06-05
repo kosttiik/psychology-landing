@@ -1,0 +1,12 @@
+services:
+  bio-landing:
+    build:
+      context: .
+      args:
+        VITE_TG_URL: ${VITE_TG_URL}
+        VITE_TG_HANDLE: ${VITE_TG_HANDLE}
+    image: bio-landing:latest
+    container_name: bio-landing
+    ports:
+      - "${HOST_PORT:-8973}:4173"
+    restart: unless-stopped
