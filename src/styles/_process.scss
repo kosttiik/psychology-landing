@@ -1,0 +1,135 @@
+@use 'mixins' as *;
+
+// Process Section
+.process {
+  background: var(--bg-light);
+  padding: var(--section-py) 0;
+  position: relative;
+  overflow: hidden;
+
+  &__inner {
+    @include container;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+
+    @include respond($bp-lg) { gap: 48px; }
+
+    @include respond($bp-md) {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+  }
+
+  // Left column
+  &__left {}
+
+  &__title {
+    font-family: var(--font-serif);
+    font-size: clamp(28px, 3.5vw, 44px);
+    color: var(--text-dark);
+    line-height: 1.25;
+    margin-bottom: 48px;
+
+    em { font-style: italic; font-weight: 600; }
+  }
+
+  &__feature {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 32px;
+
+    &:last-child { margin-bottom: 0; }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(74,124,111,0.1);
+      @include flex-center;
+      flex-shrink: 0;
+      color: var(--green-mid);
+    }
+
+    .feature-content {}
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+    }
+
+    .feature-text {
+      font-size: 14px;
+      color: #6a7a72;
+      line-height: 1.65;
+    }
+  }
+
+  // Right column - bubbles
+  &__bubbles {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 24px;
+  }
+
+  &__bubble {
+    background: #fff;
+    border-radius: var(--r-card);
+    padding: 18px 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-dark);
+    transition:
+      transform    0.3s var(--ease),
+      box-shadow   0.3s var(--ease),
+      border-color 0.3s var(--ease);
+    border: 1.5px solid transparent;
+
+    @media (hover: hover) {
+      &:hover {
+        transform: translateX(8px);
+        box-shadow: 0 10px 36px rgba(0,0,0,0.12);
+        border-color: rgba(74, 124, 111, 0.18);
+      }
+    }
+
+    // alignment alternation
+    &:nth-child(even) {
+      align-self: flex-end;
+      width: 90%;
+    }
+
+    &:nth-child(odd) {
+      align-self: flex-start;
+      width: 90%;
+    }
+
+    // Gold accent bubble
+    &--gold {
+      background: var(--gold);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(201,169,110,0.35);
+      border-color: transparent;
+
+      @media (hover: hover) {
+        &:hover {
+          transform: translateX(8px);
+          box-shadow: 0 12px 40px rgba(201,169,110,0.4);
+          border-color: transparent;
+        }
+      }
+    }
+
+    .bubble-label {
+      @include label;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 6px;
+    }
+  }
+}

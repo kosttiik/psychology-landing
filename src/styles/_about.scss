@@ -1,0 +1,315 @@
+@use 'mixins' as *;
+
+// About Section
+.about {
+  background: var(--bg-dark);
+  padding: 60px 0 80px;
+
+  &__card {
+    @include container;
+    background: var(--bg-light);
+    border-radius: var(--r-section);
+    padding: 80px;
+    overflow: visible;
+    position: relative;
+
+    @include respond($bp-lg) { padding: 60px 40px; }
+    @include respond($bp-md) { padding: 48px 24px; }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 80px;
+    align-items: start;
+
+    @include respond($bp-lg) {
+      grid-template-columns: 340px 1fr;
+      gap: 48px;
+    }
+
+    @include respond($bp-md) {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+  }
+
+  // Photo Column
+  &__photos {
+    position: relative;
+    margin-top: -140px;
+
+    @include respond($bp-md) { margin-top: 0; }
+  }
+
+  // Wrapper that enables side-by-side layout on mobile
+  &__photos-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+
+    @include respond($bp-md) {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  }
+
+  &__photo-main-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    // Decorative portrait, not text - no I-beam cursor
+    cursor: default;
+    user-select: none;
+
+    @include respond($bp-md) { flex: 0 0 55%; }
+  }
+
+  &__photo-main {
+    position: relative;
+    width: 100%;
+    border-radius: 28px;
+    // Let the figure bleed out; the slack on each side keeps the shadow from clipping
+    clip-path: inset(-500px -50px -80px -200px);
+
+    @include respond($bp-md) {
+      clip-path: inset(-500px -60px -80px -200px);
+    }
+    aspect-ratio: 4/5;
+    background: #2C4A3E;
+    overflow: hidden;
+    @include flex-center;
+
+    .photo-initials {
+      font-family: var(--font-serif);
+      font-size: 56px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 6px;
+
+      @include respond($bp-md) { font-size: 36px; }
+    }
+
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 28px;
+      z-index: 4;
+      pointer-events: none;
+    }
+  }
+
+  &__name-card {
+    position: absolute;
+    bottom: -20px;
+    left: -20px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    transform: rotate(-2deg);
+    z-index: 2;
+    max-width: 220px;
+    word-break: keep-all;
+
+    @include respond($bp-md) {
+      left: -10px;
+      bottom: -16px;
+      padding: 12px 14px;
+    }
+
+    .name-card-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-dark);
+      line-height: 1.2;
+
+      @include respond($bp-md) { font-size: 14px; }
+    }
+
+    .name-card-sub {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--green-mid);
+      margin-top: 4px;
+
+      @include respond($bp-md) { font-size: 9px; }
+    }
+  }
+
+  &__photo-small-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 60px;
+
+    @include respond($bp-md) {
+      // On mobile: single column, fills right side
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 0;
+      flex: 0 0 40%;
+      align-self: flex-start;
+      padding-top: 20px;
+    }
+  }
+
+  &__photo-small {
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 1;
+
+    // Tilt on the rotate property, not transform, so scroll-3d can stack on top
+    &:nth-child(1) {
+      background: linear-gradient(135deg, #8fab9a 0%, #6a8c7b 100%);
+      rotate: 2deg;
+    }
+
+    &:nth-child(2) {
+      background: linear-gradient(135deg, #c9a96e 0%, #a8843e 100%);
+      rotate: -1.5deg;
+      margin-top: 20px;
+
+      @include respond($bp-md) { margin-top: 0; }
+    }
+
+    @include flex-center;
+    font-family: var(--font-serif);
+    font-size: 28px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  // Text Column
+  &__text {
+    padding-top: 20px;
+  }
+
+  &__label { margin-bottom: 20px; }
+
+  &__heading {
+    font-family: var(--font-serif);
+    font-size: clamp(28px, 3.5vw, 42px);
+    color: var(--text-dark);
+    margin-bottom: 24px;
+    line-height: 1.2;
+
+    em {
+      font-style: italic;
+      font-weight: 600;
+    }
+  }
+
+  &__bio {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #4a5a52;
+    margin-bottom: 16px;
+
+    &:last-of-type { margin-bottom: 28px; }
+  }
+
+  &__video-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    transition: gap 0.25s, color 0.25s, opacity 0.7s var(--ease), transform 0.7s var(--ease);
+
+    .play-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--green-mid);
+      @include flex-center;
+      flex-shrink: 0;
+      transition: background 0.25s, border-color 0.25s;
+
+      img {
+        width: 14px;
+        height: 14px;
+        filter: invert(40%) sepia(30%) saturate(500%) hue-rotate(120deg);
+        transition: filter 0.25s;
+      }
+    }
+
+    &:hover {
+      gap: 14px;
+      color: var(--terra);
+
+      .play-icon {
+        background: var(--green-mid);
+        border-color: var(--green-mid);
+        img { filter: brightness(0) invert(1); }
+      }
+    }
+  }
+
+  // Wide Heading
+  &__wide-heading {
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: clamp(26px, 3vw, 40px);
+    color: var(--text-dark);
+    line-height: 1.35;
+    max-width: 700px;
+    margin: 72px auto 64px;
+
+    em {
+      font-style: italic;
+      font-weight: 600;
+    }
+  }
+
+  // Stats
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    border-top: 1px solid rgba(44,62,53,0.12);
+    padding-top: 48px;
+
+    @include respond($bp-md) {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+  }
+
+  &__stat {
+    text-align: center;
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 14px;
+      color: var(--green-mid);
+    }
+
+    .stat-value {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.5vw, 34px);
+      font-weight: 600;
+      color: var(--text-dark);
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #6a7a72;
+      max-width: 160px;
+      margin-inline: auto;
+    }
+  }
+}

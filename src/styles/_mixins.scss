@@ -1,0 +1,41 @@
+// Breakpoints and mixins. No CSS output, safe to @use everywhere.
+
+$bp-xl:  1280px;
+$bp-lg:  1024px;
+$bp-md:  768px;
+$bp-sm:  480px;
+
+@mixin respond($bp) {
+  @media (max-width: $bp) { @content; }
+}
+
+@mixin container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 40px;
+
+  @include respond($bp-md) { padding-inline: 20px; }
+}
+
+@mixin label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin glass {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+}

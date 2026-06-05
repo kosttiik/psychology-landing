@@ -1,0 +1,143 @@
+@use 'mixins' as *;
+
+// Scroll parallax. parallax.ts sets these vars per frame. Using translate/rotate
+// (not the transform shorthand) so they don't clobber transform-based hover/reveal.
+[data-py],
+[data-px] {
+  --py-val: 0px;
+  --px-val: 0px;
+  translate: var(--px-val) var(--py-val);
+  will-change: transform;
+}
+
+[data-rot] {
+  --rot-val: 0deg;
+  rotate: var(--rot-val);
+  will-change: transform;
+}
+
+// Scroll-linked 3D. parallax.ts sweeps --p from +1 to -1 as the element passes;
+// turn that into a gentle page-turn tilt, plus a one-time fade-in.
+[data-scroll-3d] {
+  --p: 0;
+  opacity: 0;
+  transform: perspective(1100px) rotateX(calc(var(--p) * 7deg)) translateZ(calc(var(--p) * -26px));
+  transition: opacity 0.8s var(--ease);
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+
+  &.is-visible { opacity: 1; }
+}
+
+// Keyframes
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes drawLine {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.4); }
+}
+
+// Hide the body until fonts load, so reveals don't run on unstyled text
+html:not(.fonts-ready) body {
+  visibility: hidden;
+}
+
+// Scroll reveal: springy ease + a little blur reads nicer than a plain fade-up
+$reveal-ease: cubic-bezier(0.22, 0.9, 0.3, 1);
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(40px);
+  filter: blur(6px);
+  transition:
+    opacity 0.8s $reveal-ease,
+    transform 0.8s $reveal-ease,
+    filter 0.8s $reveal-ease;
+  will-change: transform, opacity, filter;
+
+  &.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+[data-reveal="scale"] {
+  transform: scale(0.9);
+  &.is-visible { transform: scale(1); }
+}
+
+[data-reveal="left"] {
+  transform: translateX(-48px);
+  &.is-visible { transform: translateX(0); }
+}
+
+[data-reveal="right"] {
+  transform: translateX(48px);
+  &.is-visible { transform: translateX(0); }
+}
+
+// 3D entrance - element pivots up into place on a perspective plane.
+[data-reveal="3d"] {
+  transform-origin: 50% 100%;
+  transform: perspective(1200px) rotateX(20deg) translateY(48px);
+  &.is-visible { transform: perspective(1200px) rotateX(0) translateY(0); }
+}
+
+// Stagger children - cascade up with a subtle 3D pivot.
+[data-stagger] {
+  perspective: 1200px;
+
+  > * {
+    opacity: 0;
+    transform: rotateX(14deg) translateY(34px);
+    transform-origin: 50% 100%;
+    filter: blur(4px);
+    transition:
+      opacity 0.7s $reveal-ease,
+      transform 0.7s $reveal-ease,
+      filter 0.7s $reveal-ease;
+
+    @for $i from 1 through 8 {
+      &:nth-child(#{$i}) {
+        transition-delay: #{($i - 1) * 0.09}s;
+      }
+    }
+  }
+}
+
+[data-stagger].is-visible > * {
+  opacity: 1;
+  transform: rotateX(0) translateY(0);
+  filter: blur(0);
+  // Drop the stagger delay once revealed, otherwise hover transitions lag
+  transition-delay: 0s;
+}

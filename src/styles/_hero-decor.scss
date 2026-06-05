@@ -1,0 +1,75 @@
+// Hero SVG botanical positioning
+.hero-bot {
+  position: absolute;
+  pointer-events: none;
+
+  &--tl {
+    top: -20px;
+    left: -20px;
+    width: clamp(160px, 20vw, 260px);
+  }
+
+  &--tr {
+    top: -20px;
+    right: -20px;
+    width: clamp(160px, 20vw, 260px);
+  }
+}
+
+.hero-curl {
+  position: absolute;
+  width: clamp(80px, 10vw, 120px);
+  pointer-events: none;
+
+  &--l { bottom: 30%; left: 3%; }
+  &--r { bottom: 30%; right: 3%; }
+}
+
+// All polaroid motion lives here so nothing fights:
+// - transform: base tilt + hover lift/scale (transitioned)
+// - translate: JS parallax offset, no transition so it tracks scroll exactly
+// - z-index:   managed in polaroids.ts (last-touched card stays on top)
+.hero__polaroid {
+  touch-action: manipulation;
+  // Base tilt; parallax offset applied by JS via --py-val.
+  transform: rotate(var(--base-rotate, 0deg));
+  translate: 0 var(--py-val, 0px);
+
+  transition:
+    transform 0.55s cubic-bezier(.22, 1.2, .36, 1),
+    box-shadow 0.45s var(--ease),
+    filter 0.4s var(--ease);
+
+  // Hover: lift, grow, deeper shadow (pointer devices only)
+  @media (hover: hover) {
+    &:hover {
+      transform: rotate(var(--base-rotate, 0deg)) translateY(-14px) scale(1.07);
+      box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.45),
+        0 8px 20px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(201, 169, 110, 0.25);
+    }
+
+    // Siblings gently recede when one is hovered
+    .hero__photos:hover &:not(:hover) {
+      filter: brightness(0.82) saturate(0.9);
+      transform: rotate(var(--base-rotate, 0deg)) scale(0.96);
+    }
+  }
+
+  // Active / tap: quick press-down (all devices)
+  &:active {
+    transform: rotate(var(--base-rotate, 0deg)) translateY(-6px) scale(1.02);
+    transition:
+      transform 0.14s cubic-bezier(.4, 0, .2, 1),
+      box-shadow 0.14s var(--ease);
+  }
+
+  // Card 2 is centred via translate, so its parallax goes there too and the
+  // shared transform-based hover/tilt rules still apply unchanged.
+  &--2 {
+    top: 50%;
+    left: 50%;
+    translate: -50% calc(-50% + var(--py-val, 0px));
+  }
+}

@@ -1,0 +1,298 @@
+@use 'mixins' as *;
+
+// Approach Section
+.approach {
+  background: var(--bg-dark);
+  padding: 60px 0 80px;
+
+  &__card {
+    @include container;
+    background: var(--bg-light);
+    border-radius: var(--r-section);
+    padding: 80px;
+
+    @include respond($bp-lg) { padding: 60px 40px; }
+    @include respond($bp-md) { padding: 48px 24px; }
+  }
+
+  &__head {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  &__title {
+    font-family: var(--font-serif);
+    font-size: clamp(28px, 3.5vw, 46px);
+    color: var(--text-dark);
+    line-height: 1.25;
+    max-width: 620px;
+    margin-inline: auto;
+
+    em { font-style: italic; font-weight: 600; }
+  }
+
+  // Tabs
+  &__tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+
+  &__tab-btn {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: var(--r-btn);
+    color: var(--text-dark);
+    background: transparent;
+    border: 1.5px solid rgba(44, 62, 53, 0.2);
+    box-shadow: 0 0 0 rgba(74, 124, 111, 0);
+    transition:
+      background   0.3s var(--ease),
+      color        0.3s var(--ease),
+      border-color 0.3s var(--ease),
+      box-shadow   0.3s var(--ease),
+      transform    0.3s var(--ease);
+
+    &.is-active {
+      background: var(--green-mid);
+      color: var(--text-light);
+      border-color: var(--green-mid);
+      box-shadow: 0 4px 16px rgba(74, 124, 111, 0.35);
+    }
+
+    @media (hover: hover) {
+      &:hover:not(.is-active) {
+        border-color: var(--green-mid);
+        color: var(--green-mid);
+        transform: scale(1.03);
+      }
+    }
+  }
+
+  // Panels wrapper (height-animated by tabs.ts)
+  &__panels-wrap {
+    position: relative;
+  }
+
+  // Tab Panels
+  &__panel {
+    display: none;
+
+    &.is-active {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 48px;
+      align-items: start;
+      animation: panelFadeIn 0.35s cubic-bezier(0.25,0.46,0.45,0.94) both;
+
+      @include respond($bp-lg) {
+        grid-template-columns: 1fr 280px;
+        gap: 32px;
+      }
+
+      @include respond($bp-md) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  @keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  // Entrance stagger. When a panel goes active its rows cascade in instead of
+  // popping at once; toggling display:none restarts the animations for free.
+  @keyframes approachItemIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes approachCardIn {
+    from { opacity: 0; transform: translateY(26px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  &__panel.is-active &__item {
+    animation: approachItemIn 0.55s var(--ease) both;
+
+    @for $i from 1 through 5 {
+      &:nth-child(#{$i}) { animation-delay: #{0.05 + ($i - 1) * 0.08}s; }
+    }
+  }
+
+  &__panel.is-active &__materials {
+    animation: approachCardIn 0.65s var(--ease) 0.12s both;
+  }
+
+  &__panel.is-active .materials-item {
+    animation: approachItemIn 0.5s var(--ease) both;
+
+    @for $i from 1 through 5 {
+      &:nth-child(#{$i}) { animation-delay: #{0.32 + ($i - 1) * 0.07}s; }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__panel.is-active &__item,
+    &__panel.is-active &__materials,
+    &__panel.is-active .materials-item {
+      animation: none;
+    }
+  }
+
+  // Lesson List
+  &__list {
+    border-top: 1px solid rgba(44,62,53,0.12);
+  }
+
+  &__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 20px;
+    align-items: start;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(44,62,53,0.12);
+    transition:
+      background 0.3s var(--ease),
+      padding-left 0.35s var(--ease);
+
+    // Gold accent bar that grows from the row centre on hover.
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 3px;
+      height: 0;
+      background: var(--gold);
+      border-radius: 2px;
+      transform: translateY(-50%);
+      transition: height 0.35s var(--ease);
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background: rgba(74,124,111,0.05);
+        padding-left: 18px;
+
+        &::before { height: 56%; }
+
+        .item-num {
+          color: var(--gold-dark);
+          transform: scale(1.14);
+        }
+        .item-title { color: var(--green-mid); }
+      }
+    }
+
+    .item-num {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gold);
+      line-height: 1;
+      padding-top: 2px;
+      transform-origin: left center;
+      transition:
+        color 0.3s var(--ease),
+        transform 0.3s cubic-bezier(.22,1.2,.36,1);
+    }
+
+    .item-content {}
+
+    .item-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+      transition: color 0.25s var(--ease);
+    }
+
+    .item-desc {
+      font-size: 13px;
+      color: #6a7a72;
+      line-height: 1.55;
+    }
+  }
+
+  // Materials Card
+  &__materials {
+    background: var(--gold);
+    border-radius: 24px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(201,169,110,0.22);
+    transition:
+      transform 0.45s var(--ease),
+      box-shadow 0.45s var(--ease);
+
+    @media (hover: hover) {
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 44px rgba(201,169,110,0.34);
+
+        .materials-decor { transform: rotate(-6deg) scale(1.05); }
+      }
+    }
+
+    .materials-label {
+      @include label;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 16px;
+    }
+
+    .materials-title {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .materials-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .materials-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.9);
+
+      .check {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.25);
+        @include flex-center;
+        flex-shrink: 0;
+
+        svg { width: 10px; height: 10px; }
+      }
+    }
+
+    .materials-decor {
+      position: absolute;
+      bottom: -10px;
+      right: -10px;
+      width: 120px;
+      opacity: 0.25;
+      pointer-events: none;
+      transform-origin: bottom right;
+      transition: transform 0.6s var(--ease);
+    }
+  }
+}

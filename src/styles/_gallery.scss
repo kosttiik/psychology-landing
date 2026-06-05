@@ -1,0 +1,394 @@
+@use 'variables';
+@use 'mixins' as *;
+
+.gallery {
+  background: var(--bg-light);
+  padding-block: var(--section-py);
+  overflow: hidden;
+  position: relative;
+
+
+}
+
+.gallery__inner {
+  @include container;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.gallery__head {
+  text-align: center;
+  margin-bottom: 56px;
+
+  .label {
+    margin-bottom: 16px;
+  }
+}
+
+.gallery__title {
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 400;
+  color: var(--text-dark);
+  line-height: 1.1;
+  margin-bottom: 12px;
+  text-align: center;
+
+  em {
+    font-style: italic;
+    color: var(--green-mid);
+  }
+}
+
+.gallery__subtitle {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(44,62,53,0.3);
+  letter-spacing: 0.04em;
+  text-align: center;
+  font-style: italic;
+}
+
+// Track wrapper
+
+.gallery__track-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  // Vertical room so the scroll container doesn't clip the lifted-card shadows
+  padding-block: 52px;
+  margin-block: -52px;
+}
+
+.gallery__arrow {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(44,62,53,0.2);
+  background: #fff;
+  color: var(--text-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.25s var(--ease),
+    background 0.25s var(--ease),
+    color 0.25s var(--ease),
+    opacity 0.25s;
+  z-index: 1;
+
+  &:hover:not(:disabled) {
+    border-color: var(--green-mid);
+    background: var(--green-mid);
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.28;
+    cursor: default;
+  }
+
+  @include respond($bp-sm) { display: none; }
+}
+
+.gallery__track {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex: 1;
+  // Vertical room so the scroll container doesn't clip lifted-card shadows
+  padding-block: 52px;
+  margin-block: -52px;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+// Gallery item / card
+
+.gallery__item {
+  flex-shrink: 0;
+  width: 200px;
+  scroll-snap-align: start;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  text-align: center;
+  border-radius: var(--r-card);
+  // No overflow:hidden - shadows need vertical room
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.06),
+    0 6px 24px rgba(0,0,0,0.09),
+    0 0 0 1px rgba(201,169,110,0);   // transparent ring at rest (matches hover layer count)
+  transition:
+    // Soft spring so the card lifts with a little life instead of a flat slide.
+    transform 0.5s cubic-bezier(0.34, 1.3, 0.4, 1),
+    box-shadow 0.5s var(--ease);
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-12px) scale(1.035);
+      box-shadow:
+        0 4px 14px rgba(0,0,0,0.08),
+        0 18px 44px rgba(0,0,0,0.16),
+        0 0 0 1px rgba(201,169,110,0.45);   // gold ring fades in
+    }
+  }
+
+  &:focus-visible {
+    transform: translateY(-12px) scale(1.035);
+    box-shadow:
+      0 4px 14px rgba(0,0,0,0.08),
+      0 18px 44px rgba(0,0,0,0.16),
+      0 0 0 1px rgba(201,169,110,0.45);
+    outline: 2px solid var(--green-mid);
+    outline-offset: 3px;
+  }
+
+  @include respond($bp-md) { width: 160px; }
+  @include respond($bp-sm) { width: 140px; }
+}
+
+.gallery__item-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  overflow: hidden;
+  background: var(--bg-card);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    pointer-events: none;
+  }
+
+  // Diagonal light sheen that sweeps across on hover.
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255,255,255,0.45) 50%,
+      transparent 65%
+    );
+    transform: translateX(-110%);
+    transition: transform 0.75s var(--ease);
+    pointer-events: none;
+  }
+
+  // Magnifier cue: white disc + loupe that scales in on hover (inline SVG, no extra markup)
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background:
+      rgba(255,255,255,0.94)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%234A7C6F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E")
+      no-repeat center;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+    transition:
+      opacity 0.35s var(--ease),
+      transform 0.45s cubic-bezier(0.34, 1.5, 0.4, 1);
+    pointer-events: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+  }
+
+  @media (hover: hover) {
+    .gallery__item:hover & img { transform: scale(1.09); }
+    .gallery__item:hover &::after { transform: translateX(110%); }
+    .gallery__item:hover &::before {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+}
+
+.gallery__item-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--text-dark);
+  padding: 10px 12px 12px;
+  background: #fff;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 0 0 var(--r-card) var(--r-card);
+  text-align: center;
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
+
+  @media (hover: hover) {
+    .gallery__item:hover & { color: var(--green-mid); }
+  }
+}
+
+// Dots
+
+.gallery__dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.gallery__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  border: none;
+  background: rgba(44,62,53,0.18);
+  cursor: pointer;
+  padding: 0;
+  // Spring on width so the active dot stretches into a pill with a little snap.
+  transition:
+    width 0.4s cubic-bezier(0.34, 1.4, 0.4, 1),
+    background 0.3s var(--ease);
+
+  &.is-active {
+    width: 26px;
+    background: var(--green-mid);
+  }
+
+  &:hover:not(.is-active) { background: rgba(74,124,111,0.45); }
+}
+
+// Lightbox
+
+@keyframes lbFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lbFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.gallery__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(18,26,20,0.95);
+  overflow: hidden;
+  animation: lbFadeIn 0.22s var(--ease) forwards;
+
+  &[hidden] { display: none; }
+
+  &.is-closing {
+    animation: lbFadeOut 0.22s var(--ease) forwards;
+  }
+}
+
+.gallery__lb-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+  z-index: 2;
+
+  &:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.5);
+  }
+}
+
+// Lightbox prev/next
+.gallery__lb-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+  z-index: 2;
+
+  &:hover:not(:disabled) {
+    background: rgba(255,255,255,0.16);
+    border-color: rgba(255,255,255,0.55);
+  }
+
+  &:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  &.gallery__lb-prev { left: 20px; }
+  &.gallery__lb-next { right: 20px; }
+
+  @include respond($bp-sm) { display: none; }
+}
+
+// Images fly in from viewport edges - positioned absolutely in the fixed lightbox
+.gallery__lb-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  // Centered = resting state; JS overrides transform for slide animation
+  transform: translate(-50%, -50%);
+  max-width: min(460px, 80vw);
+  max-height: 74vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+  will-change: transform;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  touch-action: pinch-zoom;
+  z-index: 1;
+}
+
+.gallery__lb-title {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: rgba(255,255,255,0.85);
+  text-align: center;
+  font-style: italic;
+  pointer-events: none;
+  z-index: 2;
+}

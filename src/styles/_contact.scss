@@ -1,0 +1,178 @@
+@use 'mixins' as *;
+
+// Contact / CTA Section
+.contact {
+  background: var(--bg-dark);
+  padding: var(--section-py) 0;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+
+  &__decor {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &__inner {
+    @include container;
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+  }
+
+  &__eyebrow {
+    @include label;
+    display: block;
+    width: max-content;     // override global `p { max-width: 68ch }` that pinned it left
+    max-width: 100%;
+    margin: 0 auto 20px;     // center the shrink-wrapped box
+    text-indent: 3px;        // compensate trailing letter-spacing so text optically centers
+  }
+
+  &__title {
+    font-family: var(--font-serif);
+    font-size: clamp(36px, 5vw, 62px);
+    color: var(--text-light);
+    line-height: 1.15;
+    margin-bottom: 20px;
+
+    em { font-style: italic; font-weight: 600; }
+  }
+
+  &__desc {
+    font-size: 16px;
+    color: var(--text-muted);
+    line-height: 1.75;
+    max-width: 500px;
+    margin: 0 auto 44px;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  &__tg-icon {
+    filter: brightness(0) invert(1);
+    flex-shrink: 0;
+  }
+
+  &__tg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    background: #2AABEE;
+    border-radius: var(--r-btn);
+    padding: 18px 40px;
+    transition:
+      transform 0.3s var(--ease),
+      box-shadow 0.3s;
+
+    svg { flex-shrink: 0; }
+
+    &:hover {
+      transform: scale(1.04);
+      box-shadow: 0 12px 40px rgba(42,171,238,0.45);
+    }
+  }
+
+  &__handle {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    padding: 10px 0;
+
+    span {
+      color: var(--gold);
+      font-weight: 500;
+    }
+  }
+
+  &__credentials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 64px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(201,169,110,0.15);
+    flex-wrap: wrap;
+
+    .cred-item {
+      text-align: center;
+
+      .cred-value {
+        font-family: var(--font-serif);
+        font-size: 32px;
+        font-weight: 600;
+        color: var(--gold);
+        line-height: 1;
+        margin-bottom: 6px;
+      }
+
+      .cred-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+      }
+    }
+
+    .cred-sep {
+      width: 1px;
+      height: 40px;
+      background: rgba(201,169,110,0.2);
+
+      @include respond($bp-sm) { display: none; }
+    }
+  }
+}
+
+// Footer
+.footer {
+  background: #141e16;
+  padding: 32px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+
+  &__inner {
+    @include container;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    @include respond($bp-sm) {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  &__brand {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+
+    em {
+      font-style: italic;
+      color: var(--gold);
+    }
+  }
+
+  &__copy {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.5px;
+  }
+}
