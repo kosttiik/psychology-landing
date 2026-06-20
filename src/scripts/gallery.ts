@@ -1,3 +1,5 @@
+import { stopScroll, startScroll } from './smooth-scroll'
+
 export function initGallery(): void {
   const track = document.getElementById('gallery-track')
   const prevBtn = document.querySelector<HTMLButtonElement>('.gallery__arrow--prev')
@@ -207,7 +209,7 @@ export function initGallery(): void {
 
     lightbox.classList.remove('is-closing')
     lightbox.hidden = false
-    document.body.style.overflow = 'hidden'
+    stopScroll()
 
     // Active image - centered, no transition
     const active = getActive()
@@ -238,7 +240,7 @@ export function initGallery(): void {
     lightbox.addEventListener('animationend', () => {
       lightbox.hidden = true
       lightbox.classList.remove('is-closing')
-      document.body.style.overflow = ''
+      startScroll()
     }, { once: true })
   }
 

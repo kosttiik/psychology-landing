@@ -1,20 +1,46 @@
 @use 'mixins' as *;
 
+// Lenis pairing. Lenis tags <html> with these classes; without the overrides
+// the global `scroll-behavior: smooth` fights the virtual scroll position.
+html.lenis,
+html.lenis body { height: auto; }
+
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+// Pointer-tilt angles (set by tilt.ts). Registering them lets the tilt run on
+// its own short transition, decoupled from the springy hover-lift transform.
+@property --tilt-x {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --tilt-y {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 // Scroll parallax. parallax.ts sets these vars per frame. Using translate/rotate
 // (not the transform shorthand) so they don't clobber transform-based hover/reveal.
+// No blanket will-change here: several of these are full-section decor
+// containers, and permanently promoting viewport-sized layers wastes enough
+// GPU memory to cause dropped tiles on weaker devices. The browser promotes
+// them on its own while their transform is actively changing.
 [data-py],
 [data-px] {
   --py-val: 0px;
   --px-val: 0px;
   translate: var(--px-val) var(--py-val);
-  will-change: transform;
 }
 
 [data-rot] {
   --rot-val: 0deg;
   rotate: var(--rot-val);
-  will-change: transform;
 }
+// (The hero polaroids keep their own will-change in _hero.scss - they are
+// small and move on every scroll frame, so a persistent layer pays off.)
 
 // Scroll-linked 3D. parallax.ts sweeps --p from +1 to -1 as the element passes;
 // turn that into a gentle page-turn tilt, plus a one-time fade-in.
@@ -24,50 +50,27 @@
   transform: perspective(1100px) rotateX(calc(var(--p) * 7deg)) translateZ(calc(var(--p) * -26px));
   transition: opacity 0.8s var(--ease);
   transform-style: preserve-3d;
-  will-change: transform, opacity;
+  will-change: transform;
 
   &.is-visible { opacity: 1; }
 }
 
 // Keyframes
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.88); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-@keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
-}
-
-@keyframes rotateSlow {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-@keyframes drawLine {
-  from { stroke-dashoffset: 1; }
-  to   { stroke-dashoffset: 0; }
-}
-
 @keyframes dotPulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50%       { opacity: 1;   transform: scale(1.4); }
 }
 
-// Hide the body until fonts load, so reveals don't run on unstyled text
+// Hold the page back until fonts load (so nothing animates on unstyled text),
+// then fade it in. main.ts caps the wait at 1.5s; the fade makes even the
+// slow-network fallback read as an intentional entrance, not a broken render.
 html:not(.fonts-ready) body {
-  visibility: hidden;
+  opacity: 0;
+}
+
+html.fonts-ready body {
+  opacity: 1;
+  transition: opacity 0.5s ease;
 }
 
 // Scroll reveal: springy ease + a little blur reads nicer than a plain fade-up
@@ -81,7 +84,9 @@ $reveal-ease: cubic-bezier(0.22, 0.9, 0.3, 1);
     opacity 0.8s $reveal-ease,
     transform 0.8s $reveal-ease,
     filter 0.8s $reveal-ease;
-  will-change: transform, opacity, filter;
+
+  // Promote ahead of the one-shot reveal only; once visible the layer is freed
+  &:not(.is-visible) { will-change: transform, opacity, filter; }
 
   &.is-visible {
     opacity: 1;
@@ -132,6 +137,8 @@ $reveal-ease: cubic-bezier(0.22, 0.9, 0.3, 1);
       }
     }
   }
+
+  &:not(.is-visible) > * { will-change: transform, opacity, filter; }
 }
 
 [data-stagger].is-visible > * {
@@ -140,4 +147,14 @@ $reveal-ease: cubic-bezier(0.22, 0.9, 0.3, 1);
   filter: blur(0);
   // Drop the stagger delay once revealed, otherwise hover transitions lag
   transition-delay: 0s;
+}
+
+// Touch devices: skip the blur leg of reveals. Animated Gaussian blur over
+// large blocks is the main jank source on mid-range phones; the slide+fade
+// alone still reads well.
+@media (hover: none) {
+  [data-reveal],
+  [data-stagger] > * {
+    filter: none !important;
+  }
 }

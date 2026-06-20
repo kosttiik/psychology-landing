@@ -2,6 +2,10 @@
 //   data-py / data-px / data-rot  -> page-linked translate/rotate via CSS vars
 //   data-scroll-3d                -> viewport-linked tilt, feeds --p from +1 to -1
 // Returns an update(scrollY) we call from the Lenis loop.
+//
+// Element geometry is cached and refreshed on resize / page-height changes, so
+// the per-frame update is writes-only (no getBoundingClientRect -> no forced
+// reflow between the CSS-var writes).
 export function initParallax(): ((scrollY: number) => void) | null {
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (prefersReduced) return null
@@ -25,9 +29,37 @@ export function initParallax(): ((scrollY: number) => void) | null {
   ).map((el) => ({
     el,
     strength: (parseFloat(el.dataset['scroll3d'] || '1') || 1) * (isTouch ? 0.45 : 1),
+    top: 0,
+    height: 0,
   }))
 
   if (linear.length === 0 && depth.length === 0) return null
+
+  let viewH = window.innerHeight
+
+  const measure = (): void => {
+    viewH = window.innerHeight
+    const scrollY = window.scrollY
+    for (const it of depth) {
+      const rect = it.el.getBoundingClientRect()
+      it.top = rect.top + scrollY
+      it.height = rect.height
+    }
+  }
+  measure()
+
+  // Layout shifts move the cached offsets: viewport resizes, tab panels
+  // changing the page height, late image/font loads. Debounced re-measure.
+  let measureTimer: ReturnType<typeof setTimeout>
+  const queueMeasure = (): void => {
+    clearTimeout(measureTimer)
+    measureTimer = setTimeout(measure, 150)
+  }
+  window.addEventListener('resize', queueMeasure)
+  window.addEventListener('load', measure)
+  if (depth.length > 0 && 'ResizeObserver' in window) {
+    new ResizeObserver(queueMeasure).observe(document.body)
+  }
 
   return (scrollY: number): void => {
     for (const it of linear) {
@@ -36,12 +68,9 @@ export function initParallax(): ((scrollY: number) => void) | null {
       if (it.rot) it.el.style.setProperty('--rot-val', `${(scrollY / 1000) * it.rot}deg`)
     }
 
-    if (depth.length === 0) return
-    const h = window.innerHeight
-    const half = h / 2
+    const half = viewH / 2
     for (const it of depth) {
-      const rect = it.el.getBoundingClientRect()
-      const center = rect.top + rect.height / 2
+      const center = it.top - scrollY + it.height / 2
       // +1 at the bottom edge, 0 at mid-screen, -1 at the top; clamp off-screen
       const p = Math.max(-1, Math.min(1, (center - half) / half))
       it.el.style.setProperty('--p', (p * it.strength).toFixed(4))

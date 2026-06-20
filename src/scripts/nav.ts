@@ -1,3 +1,5 @@
+import { stopScroll, startScroll } from './smooth-scroll'
+
 export function initNav(): void {
   const nav = document.getElementById('nav') as HTMLElement
   const burger = document.getElementById('burger') as HTMLButtonElement
@@ -24,7 +26,8 @@ export function initNav(): void {
     burger.setAttribute('aria-expanded', String(open))
     mobileMenu.classList.toggle('is-open', open)
     mobileMenu.setAttribute('aria-hidden', String(!open))
-    document.body.style.overflow = open ? 'hidden' : ''
+    if (open) stopScroll()
+    else startScroll()
   }
 
   burger.addEventListener('click', () => toggleMenu(!menuOpen))

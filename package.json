@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "og": "node og/generate.mjs",
+    "og:icon": "node og/generate.mjs --icon",
+    "img": "node tools/webp.mjs"
   },
   "devDependencies": {
+    "@types/node": "^25.3.5",
     "typescript": "^6.0.2",
     "vite": "^8.0.8",
     "sass": "^1.99.0"

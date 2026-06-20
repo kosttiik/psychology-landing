@@ -26,24 +26,36 @@
 }
 
 // All polaroid motion lives here so nothing fights:
-// - transform: base tilt + hover lift/scale (transitioned)
+// - transform: base tilt + pointer tilt (--tilt-x/y from tilt.ts) + hover lift
 // - translate: JS parallax offset, no transition so it tracks scroll exactly
 // - z-index:   managed in polaroids.ts (last-touched card stays on top)
 .hero__polaroid {
   touch-action: manipulation;
-  // Base tilt; parallax offset applied by JS via --py-val.
-  transform: rotate(var(--base-rotate, 0deg));
+  // Base tilt + pointer tilt; parallax offset applied by JS via --py-val.
+  transform:
+    perspective(700px)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg))
+    rotate(var(--base-rotate, 0deg));
   translate: 0 var(--py-val, 0px);
 
   transition:
     transform 0.55s cubic-bezier(.22, 1.2, .36, 1),
     box-shadow 0.45s var(--ease),
-    filter 0.4s var(--ease);
+    filter 0.4s var(--ease),
+    --tilt-x 0.18s ease-out,
+    --tilt-y 0.18s ease-out;
 
   // Hover: lift, grow, deeper shadow (pointer devices only)
   @media (hover: hover) {
     &:hover {
-      transform: rotate(var(--base-rotate, 0deg)) translateY(-14px) scale(1.07);
+      transform:
+        perspective(700px)
+        rotateX(var(--tilt-x, 0deg))
+        rotateY(var(--tilt-y, 0deg))
+        rotate(var(--base-rotate, 0deg))
+        translateY(-14px)
+        scale(1.07);
       box-shadow:
         0 30px 70px rgba(0, 0, 0, 0.45),
         0 8px 20px rgba(0, 0, 0, 0.25),
@@ -59,10 +71,18 @@
 
   // Active / tap: quick press-down (all devices)
   &:active {
-    transform: rotate(var(--base-rotate, 0deg)) translateY(-6px) scale(1.02);
+    transform:
+      perspective(700px)
+      rotateX(var(--tilt-x, 0deg))
+      rotateY(var(--tilt-y, 0deg))
+      rotate(var(--base-rotate, 0deg))
+      translateY(-6px)
+      scale(1.02);
     transition:
       transform 0.14s cubic-bezier(.4, 0, .2, 1),
-      box-shadow 0.14s var(--ease);
+      box-shadow 0.14s var(--ease),
+      --tilt-x 0.18s ease-out,
+      --tilt-y 0.18s ease-out;
   }
 
   // Card 2 is centred via translate, so its parallax goes there too and the

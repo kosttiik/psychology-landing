@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!--
+  Source for public/og-image.png (1200x630).
+  The artwork is the inline SVG below; it reuses the site's palette, botanical
+  decor and polaroid motif. Regenerate after edits:
+
+    npm run og
+-->
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500&display=block" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; padding: 0; }
+    svg { display: block; }
+  </style>
+</head>
+<body>
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow-gold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C9A96E" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#C9A96E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-green" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4A7C6F" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#4A7C6F" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="card-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background + ambient light -->
+  <rect width="1200" height="630" fill="#1B261D"/>
+  <ellipse cx="870" cy="150" rx="520" ry="320" fill="url(#glow-gold)"/>
+  <ellipse cx="230" cy="540" rx="480" ry="300" fill="url(#glow-green)"/>
+
+  <!-- Botanical decor, top-left -->
+  <g opacity="0.45" transform="translate(-30,-50) scale(0.95)">
+    <path d="M10 260 C30 200, 80 160, 140 130 C180 110, 200 80, 180 30" stroke="#C9A96E" stroke-width="1.4" fill="none"/>
+    <path d="M140 130 C120 155, 80 175, 50 200" stroke="#C9A96E" stroke-width="1.1" fill="none" opacity="0.8"/>
+    <ellipse cx="178" cy="32" rx="22" ry="12" fill="none" stroke="#C9A96E" stroke-width="1.1" opacity="0.7" transform="rotate(-40 178 32)"/>
+    <ellipse cx="148" cy="128" rx="18" ry="10" fill="none" stroke="#C9A96E" stroke-width="1.1" opacity="0.7" transform="rotate(20 148 128)"/>
+    <circle cx="178" cy="32" r="3" fill="#C9A96E" opacity="0.8"/>
+  </g>
+
+  <!-- Botanical curl, bottom-left -->
+  <g opacity="0.35" transform="translate(20,540)">
+    <path d="M10 70 C30 50, 60 40, 90 10 C95 4, 100 8, 95 14 C88 22, 70 30, 100 60" stroke="#C9A96E" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Gold dot scatter -->
+  <g fill="#C9A96E">
+    <circle cx="438" cy="106" r="3" opacity="0.4"/>
+    <circle cx="565" cy="84" r="4" opacity="0.32"/>
+    <circle cx="700" cy="64" r="3" opacity="0.4"/>
+    <circle cx="172" cy="88" r="4" opacity="0.3"/>
+    <circle cx="525" cy="296" r="2.5" opacity="0.38"/>
+    <circle cx="648" cy="430" r="3.5" opacity="0.34"/>
+    <circle cx="744" cy="548" r="4" opacity="0.3"/>
+    <circle cx="345" cy="566" r="3" opacity="0.34"/>
+    <circle cx="1086" cy="572" r="3" opacity="0.4"/>
+    <circle cx="1158" cy="80" r="4" opacity="0.3"/>
+    <circle cx="930" cy="586" r="2.5" opacity="0.36"/>
+  </g>
+
+  <!-- Polaroid, back (maria-3) -->
+  <g transform="translate(762,168) rotate(-8 120 152)" filter="url(#card-shadow)">
+    <rect width="240" height="305" fill="#FFFFFF" rx="2"/>
+    <image href="../public/maria-3.jpg" x="10" y="10" width="220" height="252" preserveAspectRatio="xMidYMin slice"/>
+  </g>
+
+  <!-- Polaroid, front (maria-1) -->
+  <g transform="translate(884,128) rotate(5 140 185)" filter="url(#card-shadow)">
+    <rect width="280" height="370" fill="#FFFFFF" rx="2"/>
+    <image href="../public/maria-1.jpg" x="12" y="12" width="256" height="300" preserveAspectRatio="xMidYMin slice"/>
+    <text x="140" y="352" text-anchor="middle" font-family="Caveat" font-size="32" fill="#8a8a8a">Мария</text>
+  </g>
+
+  <!-- Text block -->
+  <text x="84" y="170" font-family="Jost" font-weight="500" font-size="17" letter-spacing="4.5" fill="#C9A96E">КОГНИТИВНО-ПОВЕДЕНЧЕСКИЙ ПСИХОТЕРАПЕВТ</text>
+
+  <text x="80" y="266" font-family="'Cormorant Garamond'" font-weight="400" font-size="92" fill="#F5F0E8">Все ответы</text>
+  <text x="80" y="362" font-family="'Cormorant Garamond'" font-weight="600" font-style="italic" font-size="92" fill="#F5F0E8">внутри Вас</text>
+
+  <!-- Handwriting underline curl -->
+  <path d="M86 398 C160 384, 280 384, 356 396" stroke="#C9A96E" stroke-width="2" fill="none" opacity="0.55" stroke-linecap="round"/>
+
+  <text x="84" y="476" font-family="'Cormorant Garamond'" font-weight="600" font-size="40" fill="#F5F0E8">Мария <tspan font-style="italic" fill="#C9A96E">Попова</tspan></text>
+  <text x="84" y="518" font-family="Jost" font-weight="300" font-size="20" letter-spacing="1" fill="#F5F0E8" fill-opacity="0.75">КПТ · АКТ · СФТ — онлайн и офлайн в Москве</text>
+
+  <!-- Telegram CTA — a solid pill so it stays legible even in a small,
+       cropped social preview (a thin bottom line was easy to miss / clip). -->
+  <g transform="translate(84,534)">
+    <rect width="248" height="60" rx="30" fill="#C9A96E"/>
+    <g transform="translate(26,17) scale(0.56)" fill="#1B261D">
+      <path d="M40.83,8.48c1.14,0,2,1,1.54,2.86l-5.58,26.3c-.39,1.87-1.52,2.32-3.08,1.45L20.4,29.26a.4.4,0,0,1,0-.65L35.77,14.73c.7-.62-.15-.92-1.07-.36L15.41,26.54a.46.46,0,0,1-.4.05L6.82,24C5,23.47,5,22.22,7.23,21.33L40,8.69a2.16,2.16,0,0,1,.83-.21Z"/>
+    </g>
+    <text x="66" y="39" font-family="Jost" font-weight="500" font-size="26" letter-spacing="0.4" fill="#1B261D">@mariia_cbt</text>
+  </g>
+</svg>
+</body>
+</html>

@@ -183,6 +183,45 @@
     font-family: var(--font-serif);
     font-size: 28px;
     color: rgba(255,255,255,0.4);
+
+    // Cover the whole tile; the gradient is only a placeholder behind the photo.
+    // Without this a non-square source leaves the green backing showing through.
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  // Adaptive photo layouts (see photos.ts): collapse gracefully when only one
+  // or two portraits exist. With one photo the secondary grid is removed
+  // outright, so the main portrait takes the full column on mobile.
+  &__photos[data-photos="1"] {
+    .about__photo-small-wrap { display: none; }
+
+    @include respond($bp-md) {
+      .about__photo-main-wrap { flex: 0 0 100%; }
+    }
+  }
+
+  // Two photos: a single secondary photo in one column. Keep it a short
+  // landscape crop so it doesn't tower under the tall main portrait; crop from
+  // the top so the face stays in frame.
+  &__photos[data-photos="2"] {
+    .about__photo-small-wrap {
+      grid-template-columns: 1fr;
+      margin-top: 28px;
+
+      @include respond($bp-md) { margin-top: 0; }
+    }
+
+    .about__photo-small {
+      aspect-ratio: 5 / 4;
+      img { object-position: center top; }
+
+      // Beside the main photo on mobile a square reads better than a wide crop.
+      @include respond($bp-md) { aspect-ratio: 1; }
+    }
   }
 
   // Text Column

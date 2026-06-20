@@ -176,10 +176,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Public photos
-public/maria-*.jpg
-public/maria-*.png
+# Personal photos, diplomas and generated OG/icon assets — not for VCS
+public/maria-*
 public/diplomas/
+public/og-image.png
+public/apple-touch-icon.png
 
 ### Node Patch ###
 # Serverless Webpack directories

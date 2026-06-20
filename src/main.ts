@@ -1,32 +1,16 @@
 import './styles/main.scss'
-import Lenis from 'lenis'
+import { initSmoothScroll } from './scripts/smooth-scroll'
 import { initNav } from './scripts/nav'
 import { initScrollReveal } from './scripts/scroll-reveal'
 import { initParallax } from './scripts/parallax'
+import { initPhotos } from './scripts/photos'
 import { initPolaroids } from './scripts/polaroids'
 import { initToggle } from './scripts/toggle'
 import { initTabs } from './scripts/tabs'
 import { initGallery } from './scripts/gallery'
 import { initTilt } from './scripts/tilt'
 
-// Smooth scroll (Lenis)
-const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-// lerp mode keeps scrolling frame-rate independent, so it stays snappy on ProMotion
-let lenis: Lenis | null = null
-
-if (!prefersReduced) {
-  lenis = new Lenis({
-    lerp: 0.1,
-    smoothWheel: true,
-  })
-
-  const raf = (time: number) => {
-    lenis!.raf(time)
-    requestAnimationFrame(raf)
-  }
-  requestAnimationFrame(raf)
-}
+const lenis = initSmoothScroll()
 
 // Scroll hint: show after 2s of no scroll, hide for good on first scroll
 function initScrollHint(): void {
@@ -67,8 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.getElementById('footer-year')
   if (yearEl) yearEl.textContent = String(new Date().getFullYear())
 
-  // Wait for fonts so we don't animate before text is laid out
-  document.fonts.ready.then(() => {
+  // Wait for fonts so we don't animate before text is laid out, but cap the
+  // wait: on a slow network the page must show up anyway.
+  const fontsReady = Promise.race([
+    document.fonts.ready,
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ])
+
+  // Resolve the adaptive photo layout in parallel with fonts; both are capped,
+  // so the page never waits long. Settling it before we reveal the body means a
+  // missing portrait collapses the layout without ever flashing a broken image.
+  Promise.all([fontsReady, initPhotos()]).then(() => {
     document.documentElement.classList.add('fonts-ready')
 
     initNav()
@@ -86,7 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lenis) {
         lenis.on('scroll', () => updateParallax(window.scrollY))
       } else {
-        window.addEventListener('scroll', () => updateParallax(window.scrollY), { passive: true })
+        // Coalesce native scroll events into one update per frame
+        let ticking = false
+        window.addEventListener('scroll', () => {
+          if (ticking) return
+          ticking = true
+          requestAnimationFrame(() => {
+            updateParallax(window.scrollY)
+            ticking = false
+          })
+        }, { passive: true })
       }
       updateParallax(window.scrollY)
     }

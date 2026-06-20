@@ -73,11 +73,24 @@
         transform: scale(1.03);
       }
     }
+
+    &:active {
+      transform: scale(0.96);
+      transition-duration: 0.12s;
+    }
   }
 
   // Panels wrapper (height-animated by tabs.ts)
   &__panels-wrap {
     position: relative;
+
+    // During a tab switch tabs.ts sets overflow:hidden to clip the height
+    // transition — but that also crops the entrance translateY + card shadow of
+    // the tallest column at the bottom. This padding extends the clip box below
+    // the content so nothing is cropped; the negative margin cancels it in
+    // normal flow, leaving no visual gap.
+    padding-bottom: 48px;
+    margin-bottom: -48px;
   }
 
   // Tab Panels
@@ -231,13 +244,24 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(201,169,110,0.22);
+    // Pointer tilt (tilt.ts) composes with the hover lift
+    transform:
+      perspective(1000px)
+      rotateX(var(--tilt-x, 0deg))
+      rotateY(var(--tilt-y, 0deg));
     transition:
       transform 0.45s var(--ease),
-      box-shadow 0.45s var(--ease);
+      box-shadow 0.45s var(--ease),
+      --tilt-x 0.18s ease-out,
+      --tilt-y 0.18s ease-out;
 
     @media (hover: hover) {
       &:hover {
-        transform: translateY(-4px);
+        transform:
+          perspective(1000px)
+          rotateX(var(--tilt-x, 0deg))
+          rotateY(var(--tilt-y, 0deg))
+          translateY(-4px);
         box-shadow: 0 18px 44px rgba(201,169,110,0.34);
 
         .materials-decor { transform: rotate(-6deg) scale(1.05); }

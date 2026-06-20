@@ -7,6 +7,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  // No blue/grey flash rectangle on tap (Android Chrome / iOS Safari)
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -20,9 +22,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-img, picture, video, canvas, svg {
+img, video, canvas, svg {
   display: block;
   max-width: 100%;
+}
+
+// picture is only a WebP/JPEG format switch — make it transparent to layout so
+// the inner <img> is positioned by the same rules it would be on its own.
+picture {
+  display: contents;
 }
 
 input, button, textarea, select {
@@ -53,6 +61,20 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 p { max-width: 68ch; }
+
+::selection {
+  background: rgba(201, 169, 110, 0.4);
+}
+
+// Focus ring only for keyboard navigation; pointer/touch clicks stay clean
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

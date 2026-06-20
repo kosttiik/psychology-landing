@@ -99,8 +99,11 @@
   display: flex;
   gap: 24px;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  // Free, momentum horizontal scroll on touch — no snap, so swipes glide
+  // instead of jerking card-to-card. Arrows/dots still jump by page in JS.
+  scroll-snap-type: none;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   flex: 1;
   // Vertical room so the scroll container doesn't clip lifted-card shadows
@@ -114,8 +117,7 @@
 
 .gallery__item {
   flex-shrink: 0;
-  width: 200px;
-  scroll-snap-align: start;
+  width: 320px;
   border: none;
   padding: 0;
   background: none;
@@ -152,23 +154,40 @@
     outline-offset: 3px;
   }
 
-  @include respond($bp-md) { width: 160px; }
-  @include respond($bp-sm) { width: 140px; }
+  @include respond($bp-md) { width: 270px; }
+  @include respond($bp-sm) { width: 230px; }
 }
 
 .gallery__item-img {
   position: relative;
   width: 100%;
-  aspect-ratio: 5 / 7;
+  // Landscape frame — matches the orientation of most documents (A4 landscape).
+  aspect-ratio: 7 / 5;
   overflow: hidden;
-  background: var(--bg-card);
+  // Warm linen mat with a soft inner vignette + a hairline gold fillet, so each
+  // document reads like a framed credential whatever its orientation.
+  background:
+    radial-gradient(120% 90% at 50% 0%, #F1EADC 0%, #E7DECF 70%, #E1D7C5 100%);
+  box-shadow: inset 0 0 0 1px rgba(201,169,110,0.22);
   border-radius: var(--r-card) var(--r-card) 0 0;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    // Auto-size so the element box hugs the document itself — that lets the
+    // drop shadow + hairline frame the real paper edges (not the mat).
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     display: block;
+    border-radius: 2px;
+    box-shadow:
+      0 1px 2px rgba(44,62,53,0.12),
+      0 6px 18px rgba(44,62,53,0.18),
+      0 0 0 1px rgba(44,62,53,0.06);   // crisp paper edge
     transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     user-select: none;
     -webkit-user-drag: none;
@@ -235,9 +254,9 @@
   font-weight: 500;
   letter-spacing: 0.03em;
   color: var(--text-dark);
-  padding: 10px 12px 12px;
+  padding: 12px 12px 14px;
   background: #fff;
-  border-top: 1px solid rgba(0,0,0,0.06);
+  border-top: 1px solid rgba(201,169,110,0.28);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -360,16 +379,21 @@
 // Images fly in from viewport edges - positioned absolutely in the fixed lightbox
 .gallery__lb-img {
   position: absolute;
-  top: 50%;
+  // Biased slightly above center so the large document clears the caption.
+  top: 46%;
   left: 50%;
   // Centered = resting state; JS overrides transform for slide animation
   transform: translate(-50%, -50%);
-  max-width: min(460px, 80vw);
-  max-height: 74vh;
+  // Big enough to actually read the document; portrait docs are height-bound,
+  // landscape certificates width-bound.
+  max-width: min(1040px, 94vw);
+  max-height: 86vh;
   width: auto;
   height: auto;
   object-fit: contain;
-  border-radius: 8px;
+  // White mat frame so the document reads like a framed print on the dark scrim.
+  border: 6px solid #fff;
+  border-radius: 4px;
   box-shadow: 0 24px 80px rgba(0,0,0,0.55);
   will-change: transform;
   user-select: none;
@@ -381,11 +405,12 @@
 
 .gallery__lb-title {
   position: absolute;
-  bottom: 40px;
+  bottom: 26px;
   left: 0;
   right: 0;
+  padding-inline: 24px;
   font-family: var(--font-serif);
-  font-size: 22px;
+  font-size: 18px;
   color: rgba(255,255,255,0.85);
   text-align: center;
   font-style: italic;

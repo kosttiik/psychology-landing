@@ -63,6 +63,20 @@ export function initTabs(): void {
     })
   })
 
+  // Arrow-key navigation between tabs (WAI-ARIA tabs pattern)
+  tabBtns.forEach((btn, i) => {
+    btn.addEventListener('keydown', (e: KeyboardEvent) => {
+      let next = -1
+      if (e.key === 'ArrowRight') next = (i + 1) % tabBtns.length
+      if (e.key === 'ArrowLeft')  next = (i - 1 + tabBtns.length) % tabBtns.length
+      if (next === -1) return
+      e.preventDefault()
+      const target = tabBtns[next]!
+      target.focus()
+      target.click()
+    })
+  })
+
   // Replay entrance stagger when section scrolls into view
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const section = document.querySelector<HTMLElement>('.approach')

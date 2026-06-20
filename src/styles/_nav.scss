@@ -8,21 +8,36 @@
   right: 0;
   z-index: 100;
   padding: 20px 0;
-  transition:
-    background var(--duration) var(--ease),
-    padding var(--duration) var(--ease),
-    backdrop-filter var(--duration) var(--ease);
+  transition: padding var(--duration) var(--ease);
+
+  // Glass layer. Lives on a pseudo-element so only its opacity animates;
+  // transitioning backdrop-filter itself re-runs the blur every frame.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(27, 38, 29, 0.82);
+    // -webkit- must precede the standard prop: Lightning CSS (Vite's CSS
+    // minifier) otherwise merges the pair into only the -webkit- one, which
+    // kills the blur in Firefox (no -webkit-backdrop-filter alias).
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border-bottom: 1px solid rgba(201, 169, 110, 0.12);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    transition: opacity 0.45s var(--ease);
+    pointer-events: none;
+  }
 
   &.is-scrolled {
     padding: 12px 0;
-    background: rgba(27, 38, 29, 0.88);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(201, 169, 110, 0.12);
+
+    &::before { opacity: 1; }
   }
 
   &__inner {
     @include container;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -37,7 +52,7 @@
     letter-spacing: 1px;
     white-space: nowrap;
 
-    span {
+    em {
       font-style: italic;
       color: var(--gold);
     }
@@ -107,6 +122,11 @@
       background: var(--green-light);
       transform: scale(1.04);
       box-shadow: 0 8px 24px rgba(74, 124, 111, 0.4);
+    }
+
+    &:active {
+      transform: scale(0.97);
+      transition-duration: 0.12s;
     }
 
     @include respond($bp-lg) { display: none; }
@@ -198,7 +218,9 @@
   position: fixed;
   inset: 0;
   z-index: 99;
-  background: var(--bg-dark);
+  background: rgba(27, 38, 29, 0.94);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -206,14 +228,22 @@
   gap: 36px;
   opacity: 0;
   pointer-events: none;
+  // visibility keeps the hidden menu out of the tab order / screen readers;
+  // the 0s delay holds it visible until the fade-out finishes
+  visibility: hidden;
   transition:
     opacity 0.4s var(--ease),
-    transform 0.4s var(--ease);
+    transform 0.4s var(--ease),
+    visibility 0s linear 0.4s;
   transform: translateY(-20px);
 
   &.is-open {
     opacity: 1;
     pointer-events: all;
+    visibility: visible;
+    transition:
+      opacity 0.4s var(--ease),
+      transform 0.4s var(--ease);
     transform: translateY(0);
   }
 

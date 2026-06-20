@@ -84,6 +84,11 @@
       transform: scale(1.04);
       box-shadow: 0 12px 40px rgba(42,171,238,0.45);
     }
+
+    &:active {
+      transform: scale(0.97);
+      transition-duration: 0.12s;
+    }
   }
 
   &__handle {

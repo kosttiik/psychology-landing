@@ -1,32 +1,44 @@
 // Mouse-tilt 3D for cards. Desktop only, off under reduced-motion.
+//
+// Writes --tilt-x/--tilt-y only; the CSS composes them into the element's
+// transform next to its base rotation and hover lift. That way the tilt never
+// clobbers other motion (the old inline-transform version permanently erased
+// the polaroids' base tilt after the first hover). Pointer events are
+// coalesced to one style write per frame.
 
-interface TiltOptions {
-  maxTilt?: number
-  perspective?: number
-  scale?: number
-  speed?: number
-}
+function attachTilt(el: HTMLElement, maxTilt: number): void {
+  let raf = 0
+  let tiltX = 0
+  let tiltY = 0
 
-function attachTilt(el: HTMLElement, opts: TiltOptions = {}): void {
-  const { maxTilt = 8, perspective = 800, scale = 1.03, speed = 400 } = opts
+  const write = (): void => {
+    raf = 0
+    el.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`)
+    el.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`)
+  }
 
-  el.style.willChange = 'transform'
-  el.style.transition = `transform ${speed}ms cubic-bezier(0.25,0.46,0.45,0.94)`
-
-  el.addEventListener('mousemove', (e: MouseEvent) => {
+  el.addEventListener('pointermove', (e: PointerEvent) => {
     const rect = el.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
-    const dx = (e.clientX - cx) / (rect.width / 2)
-    const dy = (e.clientY - cy) / (rect.height / 2)
-    el.style.transform =
-      `perspective(${perspective}px) rotateX(${-dy * maxTilt}deg) rotateY(${dx * maxTilt}deg) scale(${scale})`
+    const dx = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    const dy = ((e.clientY - rect.top) / rect.height) * 2 - 1
+    tiltX = -dy * maxTilt
+    tiltY = dx * maxTilt
+    if (!raf) raf = requestAnimationFrame(write)
   })
 
-  el.addEventListener('mouseleave', () => {
-    el.style.transform =
-      `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`
-  })
+  const reset = (): void => {
+    if (raf) {
+      cancelAnimationFrame(raf)
+      raf = 0
+    }
+    tiltX = 0
+    tiltY = 0
+    el.style.setProperty('--tilt-x', '0deg')
+    el.style.setProperty('--tilt-y', '0deg')
+  }
+
+  el.addEventListener('pointerleave', reset)
+  el.addEventListener('pointercancel', reset)
 }
 
 export function initTilt(): void {
@@ -38,12 +50,12 @@ export function initTilt(): void {
 
   // Hero polaroids, strong tilt
   document.querySelectorAll<HTMLElement>('.hero__polaroid').forEach(el =>
-    attachTilt(el, { maxTilt: 12, perspective: 600, scale: 1.04, speed: 300 })
+    attachTilt(el, 10)
   )
 
-  // Approach materials cards
+  // Approach materials cards, subtle
   document.querySelectorAll<HTMLElement>('.approach__materials').forEach(el =>
-    attachTilt(el, { maxTilt: 5, perspective: 1000, scale: 1.02, speed: 400 })
+    attachTilt(el, 4)
   )
 
   // Gallery and before/after cards are skipped - their CSS transforms would fight the tilt.
