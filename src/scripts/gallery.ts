@@ -143,6 +143,27 @@ export function initGallery(): void {
     img.style.transform  = tf
   }
 
+  // Point an <img> at src and resolve once it has actually decoded — or after a
+  // short timeout so a stalled load never deadlocks navigation. Without this a
+  // reused slot slides in still showing its previous picture until the new one
+  // finishes loading, which looks like the image flickers/switches twice.
+  function loadImage(img: HTMLImageElement, src: string): Promise<void> {
+    if (img.getAttribute('src') !== src) img.src = src
+    const decoded =
+      typeof img.decode === 'function'
+        ? img.decode().catch(() => {})
+        : new Promise<void>(res => {
+            if (img.complete) return res()
+            img.onload  = () => res()
+            img.onerror = () => res()
+          })
+    // Safety net only: a broken image rejects decode() instantly (handled
+    // above), so this just stops a pathologically slow/hung load from blocking
+    // navigation forever — real loads resolve well before this.
+    const timeout = new Promise<void>(res => setTimeout(res, 5000))
+    return Promise.race([decoded, timeout]).then(() => {})
+  }
+
   function getActive()   { return lbImgEls[lbSlot]! }
   function getIncoming() { return lbImgEls[1 - lbSlot]! }
 
@@ -166,37 +187,47 @@ export function initGallery(): void {
     const active   = getActive()
     const incoming = getIncoming()
 
-    // Load into idle slot, park it off-screen on the correct side
-    incoming.src = src
-    incoming.alt = title
+    // Park the idle slot off-screen on the entry side *before* loading, so the
+    // image it held two steps ago is never visible while the new one decodes.
     applyInstant(incoming, dir > 0 ? T_OFF_RIGHT : T_OFF_LEFT)
+    incoming.alt = title
 
-    // Fade title out
+    // Fade title out for feedback; the current image stays put until it's ready.
     if (lbTitle) {
       lbTitle.style.transition = 'opacity 0.15s ease'
       lbTitle.style.opacity    = '0'
     }
 
-    // Double rAF so the browser paints the parked position before sliding
-    requestAnimationFrame(() => {
+    // Slide only once the incoming image has decoded — otherwise the slot slides
+    // in showing its stale previous picture and snaps to the new one on load.
+    loadImage(incoming, src).then(() => {
+      // Lightbox was closed while the image was loading — abort the slide.
+      if (!lightbox || lightbox.hidden) {
+        lbAnimating = false
+        return
+      }
+
+      // Double rAF so the browser paints the parked position before sliding
       requestAnimationFrame(() => {
-        applySlide(incoming, T_CENTER)
-        applySlide(active,   dir > 0 ? T_OFF_LEFT : T_OFF_RIGHT)
+        requestAnimationFrame(() => {
+          applySlide(incoming, T_CENTER)
+          applySlide(active,   dir > 0 ? T_OFF_LEFT : T_OFF_RIGHT)
 
-        // Update title halfway through
-        setTimeout(() => {
-          if (lbTitle) {
-            lbTitle.textContent  = title
-            lbTitle.style.opacity = '1'
-          }
-          updateLbButtons()
-        }, SLIDE_MS / 2)
+          // Update title halfway through
+          setTimeout(() => {
+            if (lbTitle) {
+              lbTitle.textContent  = title
+              lbTitle.style.opacity = '1'
+            }
+            updateLbButtons()
+          }, SLIDE_MS / 2)
 
-        // Swap slots once the slide is done; leave the outgoing image off-screen
-        setTimeout(() => {
-          lbSlot      = 1 - lbSlot
-          lbAnimating = false
-        }, SLIDE_MS + 20)
+          // Swap slots once the slide is done; leave the outgoing image off-screen
+          setTimeout(() => {
+            lbSlot      = 1 - lbSlot
+            lbAnimating = false
+          }, SLIDE_MS + 20)
+        })
       })
     })
   }

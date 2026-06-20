@@ -131,6 +131,10 @@
   &__photos[data-photos="1"],
   &__photos[data-photos="2"] {
     gap: clamp(14px, 2.4vw, 30px);
+    // These layouts flow the polaroids in-document (position: relative), so the
+    // fixed heights meant for the scattered 3-photo composition would let a tall
+    // single card overflow and collide with the content/CTA above. Size to fit.
+    height: auto;
 
     .hero__polaroid {
       position: relative;

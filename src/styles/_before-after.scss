@@ -127,8 +127,10 @@
   &__board-scroll {
     @include respond($bp-sm) {
       overflow-x: auto;
-      scroll-snap-type: x mandatory;
+      // Free horizontal scroll — no scroll-snap, which felt sticky/janky on
+      // touch as it fought the finger to lock each card to the edge.
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
       scrollbar-width: none;
       margin-inline: -20px;
       padding-inline: 20px;
@@ -171,7 +173,6 @@
     @include respond($bp-sm) {
       flex-shrink: 0;
       width: 240px;
-      scroll-snap-align: start;
       height: 220px;
       overflow: visible;
       box-shadow:

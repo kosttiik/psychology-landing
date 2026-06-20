@@ -1,5 +1,15 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
+function stripHtmlComments(): Plugin {
+  return {
+    name: "strip-html-comments",
+    apply: "build",
+    transformIndexHtml(html) {
+      return html.replace(/<!--(?!\[if)[\s\S]*?-->/g, "");
+    },
+  };
+}
+
 // Emits robots.txt + sitemap.xml into dist/ at build time, derived from
 // VITE_SITE_URL so the domain lives in exactly one place (.env).
 function seoFiles(siteUrl: string): Plugin {
@@ -53,7 +63,7 @@ export default defineConfig(({ mode }) => {
         scss: {},
       },
     },
-    plugins: [seoFiles(siteUrl)],
+    plugins: [stripHtmlComments(), seoFiles(siteUrl)],
     // served in Docker behind an external reverse proxy
     preview: {
       host: true,
