@@ -121,7 +121,10 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
+# All VITE_* values are public, but kept out of VCS on purpose — the GitHub
+# Actions deploy generates .env.production from repository Variables at build time.
 .env
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
@@ -176,11 +179,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Personal photos, diplomas and generated OG/icon assets — not for VCS
-public/maria-*
-public/diplomas/
+# Site images (photos, diplomas, OG/icon) are committed so the GitHub Pages
+# CI build has them. The .png OG/icon variants are stale build artifacts.
 public/og-image.png
-public/apple-touch-icon.png
 
 ### Node Patch ###
 # Serverless Webpack directories

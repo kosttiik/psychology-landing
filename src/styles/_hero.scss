@@ -442,6 +442,26 @@
     animation: scrollHintGlow 2.8s ease-in-out infinite;
   }
 
+  // Soft dark backdrop so the hint stays legible over bright content (e.g. the
+  // sunlit polaroid) on shorter screens where it sits right behind the hint.
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 200px;
+    height: 150px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      ellipse at center,
+      rgba(20, 30, 22, 0.45) 0%,
+      transparent 70%
+    );
+    filter: blur(4px);
+    z-index: -2;
+    pointer-events: none;
+  }
+
   // Plain transitions so toggling is-visible / is-dismissed eases in and out
   &.is-visible {
     opacity: 1;
@@ -512,6 +532,7 @@
     text-transform: uppercase;
     color: rgba(245, 240, 232, 0.78);
     white-space: nowrap;
+    text-shadow: 0 1px 6px rgba(20, 30, 22, 0.6);
   }
 
   &__chevron {

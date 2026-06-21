@@ -5,10 +5,15 @@
 // — Telegram/WhatsApp/VK don't render SVG previews. Re-run it yourself whenever
 // the photos or artwork change:
 //
-//   npm run og        -> regenerate public/og-image.png (1200x630 @2x)
+//   npm run og        -> regenerate public/og-image.jpg (1200x630)
 //   npm run og:icon   -> regenerate public/apple-touch-icon.png (180x180 @2x)
 //
-// Needs a local Chrome/Chromium (auto-detected; override with CHROME_BIN).
+// The OG image is rendered at 2x with Chrome for a crisp source, then downscaled
+// and JPEG-encoded with ImageMagick so the file stays small (~60KB). Social
+// scrapers (Telegram/WhatsApp/VK) don't need a multi-MB retina PNG.
+//
+// Needs a local Chrome/Chromium (auto-detected; override with CHROME_BIN) and
+// ImageMagick (`magick`) for the OG branch.
 // The polaroid photos are picked from the maria-*.{jpg,png} files present in
 // public/, so swapping the photos and re-running refreshes the preview.
 // Rendered at 2x for a crisp, high-resolution result.
@@ -139,16 +144,26 @@ if (iconMode) {
     writeFileSync(tmpHtml, src);
     htmlUrl = pathToFileURL(tmpHtml).href;
   }
+  const tmpPng = join(tmpdir(), "og-image-src.png");
+  const out = join(outDir, "og-image.jpg");
   try {
-    shot({
-      htmlUrl,
-      out: join(outDir, "og-image.png"),
-      width: 1200,
-      height: 630,
-      scale: 2,
-    });
+    shot({ htmlUrl, out: tmpPng, width: 1200, height: 630, scale: 2 });
+    // Downscale the 2x render to the canonical 1200x630 and JPEG-encode it.
+    const r = spawnSync(
+      "magick",
+      [tmpPng, "-resize", "1200x630", "-strip", "-quality", "85", out],
+      { stdio: "inherit" },
+    );
+    if (r.error || r.status !== 0 || !existsSync(out)) {
+      throw new Error(
+        "magick failed to encode og-image.jpg (is ImageMagick installed?)",
+      );
+    }
+    // Remove the now-stale PNG if a previous run left one behind.
+    rmSync(join(outDir, "og-image.png"), { force: true });
   } finally {
+    rmSync(tmpPng, { force: true });
     if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
   }
-  console.log(`og-image.png written to ${outDir}`);
+  console.log(`og-image.jpg written to ${outDir}`);
 }
