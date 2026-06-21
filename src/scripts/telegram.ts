@@ -1,12 +1,9 @@
-// On Russian mobile networks the t.me domain is often throttled or blocked,
-// while the tg:// deep link (an OS-level intent that never touches t.me) still
-// opens the installed app. So on mobile we route Telegram clicks through
-// tg://resolve and fall back to the https t.me URL only if the app doesn't take
-// over the screen — i.e. it isn't installed.
+// In Russia the t.me domain is often throttled or blocked on both mobile and
+// desktop networks, while the tg:// deep link (an OS-level intent that never
+// touches t.me) still opens the installed app. So every Telegram click is
+// routed through tg://resolve, falling back to the https t.me URL only if no
+// app takes over — i.e. it isn't installed.
 export function initTelegram(): void {
-  const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
-  if (!isMobile) return
-
   const links = document.querySelectorAll<HTMLAnchorElement>('a[href*="t.me/"]')
 
   links.forEach((link) => {
@@ -20,19 +17,23 @@ export function initTelegram(): void {
       const markSwitched = (): void => {
         switched = true
       }
+      // The app taking over backgrounds the tab (mobile) or steals window focus
+      // (desktop) — either signal means the deep link was handled.
       document.addEventListener('visibilitychange', markSwitched)
       window.addEventListener('pagehide', markSwitched)
+      window.addEventListener('blur', markSwitched)
 
       // Hand off to the installed app — bypasses any t.me domain blocking.
       window.location.href = `tg://resolve?domain=${domain}`
 
-      // Still here after a moment → the app isn't installed: fall back to the
-      // web URL so the user at least lands on a working page.
+      // Still focused here after a moment → no app caught the link: fall back to
+      // the web URL. hasFocus() also guards against a missed blur/visibility event.
       window.setTimeout(() => {
         document.removeEventListener('visibilitychange', markSwitched)
         window.removeEventListener('pagehide', markSwitched)
-        if (!switched) window.location.href = link.href
-      }, 1200)
+        window.removeEventListener('blur', markSwitched)
+        if (!switched && document.hasFocus()) window.location.href = link.href
+      }, 1500)
     })
   })
 }
