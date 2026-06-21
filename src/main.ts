@@ -9,6 +9,7 @@ import { initToggle } from './scripts/toggle'
 import { initTabs } from './scripts/tabs'
 import { initGallery } from './scripts/gallery'
 import { initTilt } from './scripts/tilt'
+import { initTelegram } from './scripts/telegram'
 
 const lenis = initSmoothScroll()
 
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs()
     initGallery()
     initTilt()
+    initTelegram()
     initScrollHint()
 
     // Drive parallax from Lenis so it stays in sync with the smooth scroll
