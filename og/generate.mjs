@@ -113,14 +113,37 @@ function shot({ htmlUrl, out, width, height, scale }) {
 
 if (iconMode) {
   // apple-touch-icon: 180x180 logical, rendered @2x (= 360x360 px)
+  const appleIcon = join(outDir, "apple-touch-icon.png");
   shot({
     htmlUrl: pathToFileURL(join(ogDir, "apple-touch-icon.html")).href,
-    out: join(outDir, "apple-touch-icon.png"),
+    out: appleIcon,
     width: 180,
     height: 180,
     scale: 2,
   });
   console.log(`apple-touch-icon.png written to ${outDir}`);
+
+  // Derive the raster favicons that Google/Yandex pick up most reliably from the
+  // same artwork: a multi-resolution favicon.ico (16/32/48) + a 96x96 PNG. An
+  // SVG favicon is also shipped, but a real /favicon.ico is the safest bet for
+  // the search-result favicon.
+  const ico = spawnSync(
+    "magick",
+    [appleIcon, "-define", "icon:auto-resize=16,32,48", join(outDir, "favicon.ico")],
+    { stdio: "inherit" },
+  );
+  if (ico.error || ico.status !== 0) {
+    throw new Error("magick failed to write favicon.ico (is ImageMagick installed?)");
+  }
+  const png = spawnSync(
+    "magick",
+    [appleIcon, "-resize", "96x96", join(outDir, "favicon-96x96.png")],
+    { stdio: "inherit" },
+  );
+  if (png.error || png.status !== 0) {
+    throw new Error("magick failed to write favicon-96x96.png");
+  }
+  console.log(`favicon.ico + favicon-96x96.png written to ${outDir}`);
 } else {
   // OG image: 1200x630 logical, rendered @2x (= 2400x1260 px)
   const photos = pickPhotos();

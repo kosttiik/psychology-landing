@@ -12,7 +12,11 @@
 // a missing file never flashes a broken image.
 
 // Base names; each portrait ships as a WebP (preferred) + JPEG fallback.
-const CANDIDATES = ['maria-1', 'maria-2', 'maria-3'] as const
+// NOTE: maria-2 / maria-3 are not uploaded yet — they're omitted here so the
+// probe doesn't request (and 404 on) them. Their markup in index.html is
+// likewise commented out. Re-add them to this list once the files exist in
+// public/ (and uncomment the matching cards in index.html).
+const CANDIDATES = ['maria-1' /* , 'maria-2', 'maria-3' */] as const
 
 // Hero polaroid captions per available-photo count. With three cards the info
 // is spread across them; with fewer, it's rolled up onto the survivors so a
