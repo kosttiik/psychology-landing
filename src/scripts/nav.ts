@@ -45,4 +45,49 @@ export function initNav(): void {
   mobileMenu.addEventListener('click', (e) => {
     if (e.target === mobileMenu) toggleMenu(false)
   })
+
+  initScrollSpy()
+}
+
+// Highlight the nav link for the section currently in view. Plain scroll +
+// getBoundingClientRect rather than IntersectionObserver — IO has proven
+// unreliable in nested-iframe previews of this environment.
+function initScrollSpy(): void {
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.nav__link'))
+  const tracked = links
+    .map(link => {
+      const id = link.getAttribute('href')?.slice(1)
+      const section = id ? document.getElementById(id) : null
+      return section ? { link, section } : null
+    })
+    .filter((entry): entry is { link: HTMLAnchorElement; section: HTMLElement } => entry !== null)
+
+  if (tracked.length === 0) return
+
+  // A section counts as "current" once its top has scrolled up past roughly
+  // the sticky nav's height, so the highlight switches a beat before the
+  // section fully fills the viewport rather than lagging behind it.
+  const ACTIVATION_OFFSET = 140
+
+  const setActive = (): void => {
+    let current: HTMLAnchorElement | null = null
+    for (const { link, section } of tracked) {
+      if (section.getBoundingClientRect().top <= ACTIVATION_OFFSET) {
+        current = link
+      }
+    }
+    links.forEach(link => link.classList.toggle('is-active', link === current))
+  }
+
+  let ticking = false
+  window.addEventListener('scroll', () => {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
+      setActive()
+      ticking = false
+    })
+  }, { passive: true })
+
+  setActive()
 }

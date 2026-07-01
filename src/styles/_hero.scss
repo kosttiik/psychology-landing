@@ -230,7 +230,8 @@
     &-img {
       width: 100%;
       aspect-ratio: 3/4;
-      background: linear-gradient(135deg, #3a5a4a 0%, #2C4A3E 50%, #1B261D 100%);
+      // Warm neutral placeholder (not green) so it doesn't colour-flash against the warm photo while loading
+      background: linear-gradient(135deg, #8a7a68 0%, #6b5c4a 50%, #4a3f33 100%);
       display: flex;
       align-items: center;
       justify-content: center;

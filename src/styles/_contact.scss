@@ -98,9 +98,16 @@
     letter-spacing: 1px;
     padding: 10px 0;
 
-    span {
+    a {
       color: var(--gold);
       font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--gold-dark);
+        text-decoration: underline;
+      }
     }
   }
 
