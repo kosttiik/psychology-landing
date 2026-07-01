@@ -5,8 +5,13 @@
   @include label;
   display: block;
   width: max-content;
+  max-width: 100%;
   margin-inline: auto;
   margin-bottom: 20px;
+  // Trailing letter-spacing after the last glyph isn't visible but still
+  // counts toward the centered box's width, nudging the visible text left of
+  // true center — nudge back with a small indent (see .contact__eyebrow).
+  text-indent: 3px;
 }
 
 // Text highlight

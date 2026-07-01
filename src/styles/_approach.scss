@@ -160,6 +160,14 @@
     }
   }
 
+  // Education/experience timeline (always visible, not a tab panel — the
+  // strongest trust signal shouldn't be hidden behind a click)
+  &__timeline {
+    margin-top: 56px;
+    padding-top: 44px;
+    border-top: 1px solid rgba(44,62,53,.12);
+  }
+
   // Lesson List
   &__list {
     border-top: 1px solid rgba(44,62,53,0.12);
@@ -230,9 +238,9 @@
     }
 
     .item-desc {
-      font-size: 13px;
+      font-size: 14.5px;
       color: #6a7a72;
-      line-height: 1.55;
+      line-height: 1.6;
     }
   }
 

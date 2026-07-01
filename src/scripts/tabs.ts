@@ -63,7 +63,10 @@ export function initTabs(): void {
     })
   })
 
-  // Arrow-key navigation between tabs (WAI-ARIA tabs pattern)
+  // Arrow-key navigation between tabs (WAI-ARIA tabs pattern). Activation is
+  // debounced so rapid arrow-tapping doesn't queue overlapping height/stagger
+  // animations — only the tab the user settles on actually activates.
+  let activateTimer: ReturnType<typeof setTimeout>
   tabBtns.forEach((btn, i) => {
     btn.addEventListener('keydown', (e: KeyboardEvent) => {
       let next = -1
@@ -73,7 +76,8 @@ export function initTabs(): void {
       e.preventDefault()
       const target = tabBtns[next]!
       target.focus()
-      target.click()
+      clearTimeout(activateTimer)
+      activateTimer = setTimeout(() => target.click(), 150)
     })
   })
 

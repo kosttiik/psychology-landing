@@ -41,11 +41,6 @@ function initScrollHint(): void {
   window.addEventListener('scroll', onScroll, { passive: true })
 }
 
-// Protect images from right-click save
-document.addEventListener('contextmenu', (e) => {
-  if (e.target instanceof HTMLImageElement) e.preventDefault()
-}, true)
-
 // Init after fonts + DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   // Dynamic copyright year

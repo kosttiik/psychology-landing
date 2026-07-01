@@ -67,6 +67,29 @@
       color: #6a7a72;
       line-height: 1.65;
     }
+
+    &--price {
+      background: rgba(201,169,110,.16);
+      border: 1.5px solid rgba(201,169,110,.4);
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 8px 24px rgba(201,169,110,.18);
+
+      .feature-icon {
+        background: rgba(201,169,110,.28);
+        color: var(--gold-dark);
+      }
+
+      .feature-title {
+        color: var(--gold-dark);
+      }
+
+      .feature-text strong {
+        font-family: var(--font-serif);
+        font-size: 26px;
+        color: var(--gold-dark);
+      }
+    }
   }
 
   // Right column - bubbles
