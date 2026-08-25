@@ -61,18 +61,6 @@ html.lenis body { height: auto; }
   50%       { opacity: 1;   transform: scale(1.4); }
 }
 
-// Hold the page back until fonts load (so nothing animates on unstyled text),
-// then fade it in. main.ts caps the wait at 1.5s; the fade makes even the
-// slow-network fallback read as an intentional entrance, not a broken render.
-html:not(.fonts-ready) body {
-  opacity: 0;
-}
-
-html.fonts-ready body {
-  opacity: 1;
-  transition: opacity 0.5s ease;
-}
-
 // Scroll reveal: springy ease + a little blur reads nicer than a plain fade-up
 $reveal-ease: cubic-bezier(0.22, 0.9, 0.3, 1);
 

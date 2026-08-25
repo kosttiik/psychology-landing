@@ -7,9 +7,8 @@
 // collapse to a balanced one- or two-photo arrangement. Mirrors the OG
 // generator, which likewise builds from whatever maria-* files are present.
 //
-// This is awaited before the body is revealed (see the body opacity gate in
-// _animations.scss + main.ts), so the layout is settled before first paint and
-// a missing file never flashes a broken image.
+// This runs after first paint, so the page stays visible while the optional
+// portrait probe settles and a missing file never blocks the initial screen.
 
 // Base names; each portrait ships as a WebP (preferred) + JPEG fallback.
 // NOTE: maria-2 / maria-3 are not uploaded yet — they're omitted here so the

@@ -22,10 +22,20 @@ export function initGallery(): void {
 
   // Prevent right-click / long-press "save image" on all diploma images
   items.forEach(item => {
-    const img = item.querySelector('img')
+    const img = item.querySelector<HTMLImageElement>('img')
     if (!img) return
     img.addEventListener('contextmenu', e => e.preventDefault())
     img.addEventListener('dragstart', e => e.preventDefault())
+
+    // Keep the warm mat visible while a thumbnail decodes, then reveal the
+    // paper once. This avoids the blank-to-image flash when a card enters the
+    // horizontal viewport on a slower connection.
+    const reveal = () => img.classList.add('is-loaded')
+    if (img.complete) reveal()
+    else {
+      img.addEventListener('load', reveal, { once: true })
+      img.addEventListener('error', reveal, { once: true })
+    }
   })
   lbImgEls.forEach(img => {
     img.addEventListener('contextmenu', e => e.preventDefault())
@@ -43,7 +53,12 @@ export function initGallery(): void {
 
   const getItemsPerPage = (): number => {
     const iw = getItemWidth()
-    return iw > 0 ? Math.max(1, Math.floor(track.clientWidth / iw)) : 1
+    const style = getComputedStyle(track)
+    const horizontalPadding = parseFloat(style.paddingLeft || '0')
+      + parseFloat(style.paddingRight || '0')
+    const visibleWidth = Math.max(0, track.clientWidth - horizontalPadding)
+    const gap = parseFloat(style.columnGap || style.gap || '24')
+    return iw > 0 ? Math.max(1, Math.floor((visibleWidth + gap) / iw)) : 1
   }
 
   const getPageCount = (): number =>
@@ -75,6 +90,46 @@ export function initGallery(): void {
     if (prevBtn) prevBtn.disabled = current === 0
     if (nextBtn) nextBtn.disabled = current >= getPageCount() - 1
   }
+
+  const getThumbSrc = (item: HTMLElement): string =>
+    item.querySelector<HTMLImageElement>('.gallery__item-img img')?.currentSrc
+      || item.querySelector<HTMLImageElement>('.gallery__item-img img')?.src
+      || ''
+
+  // Full-size documents are small enough to warm progressively. Keeping the
+  // promises in a cache means opening the lightbox or moving to the next
+  // document never starts a second request for the same file.
+  const fullImageCache = new Map<string, Promise<boolean>>()
+  const preloadFullImage = (src: string): Promise<boolean> => {
+    if (!src) return Promise.resolve(false)
+    const cached = fullImageCache.get(src)
+    if (cached) return cached
+
+    const promise = new Promise<boolean>(resolve => {
+      const image = new Image()
+      image.decoding = 'async'
+      image.onload = () => resolve(true)
+      image.onerror = () => resolve(false)
+      image.src = src
+    })
+    fullImageCache.set(src, promise)
+    return promise
+  }
+
+  const warmAround = (index: number): void => {
+    ;[index - 1, index, index + 1]
+      .filter(i => i >= 0 && i < items.length)
+      .forEach(i => { void preloadFullImage(items[i]?.dataset['src'] ?? '') })
+  }
+
+  // Start preparing the first page after the initial screen has settled. Hover
+  // and focus warm the adjacent documents too, so a user can move through the
+  // gallery without waiting for a cold full-size request.
+  window.setTimeout(() => warmAround(0), 900)
+  items.forEach((item, i) => {
+    item.addEventListener('pointerenter', () => warmAround(i))
+    item.addEventListener('focus', () => warmAround(i))
+  })
 
   // Track navigation
   function goTo(index: number) {
@@ -143,25 +198,17 @@ export function initGallery(): void {
     img.style.transform  = tf
   }
 
-  // Point an <img> at src and resolve once it has actually decoded — or after a
-  // short timeout so a stalled load never deadlocks navigation. Without this a
-  // reused slot slides in still showing its previous picture until the new one
-  // finishes loading, which looks like the image flickers/switches twice.
-  function loadImage(img: HTMLImageElement, src: string): Promise<void> {
-    if (img.getAttribute('src') !== src) img.src = src
-    const decoded =
-      typeof img.decode === 'function'
-        ? img.decode().catch(() => {})
-        : new Promise<void>(res => {
-            if (img.complete) return res()
-            img.onload  = () => res()
-            img.onerror = () => res()
-          })
-    // Safety net only: a broken image rejects decode() instantly (handled
-    // above), so this just stops a pathologically slow/hung load from blocking
-    // navigation forever — real loads resolve well before this.
-    const timeout = new Promise<void>(res => setTimeout(res, 5000))
-    return Promise.race([decoded, timeout]).then(() => {})
+  // Put the ready thumbnail into a slot immediately, then upgrade it when the
+  // original finishes. The pending-src guard prevents a late response from an
+  // older navigation from replacing a newer document.
+  function showThumbnailUntilReady(img: HTMLImageElement, src: string, fallbackSrc: string): void {
+    img.dataset['pendingSrc'] = src
+    if (fallbackSrc && img.getAttribute('src') !== fallbackSrc) img.src = fallbackSrc
+    void preloadFullImage(src).then(loaded => {
+      if (loaded && img.dataset['pendingSrc'] === src && img.getAttribute('src') !== src) {
+        img.src = src
+      }
+    })
   }
 
   function getActive()   { return lbImgEls[lbSlot]! }
@@ -198,36 +245,35 @@ export function initGallery(): void {
       lbTitle.style.opacity    = '0'
     }
 
-    // Slide only once the incoming image has decoded — otherwise the slot slides
-    // in showing its stale previous picture and snaps to the new one on load.
-    loadImage(incoming, src).then(() => {
-      // Lightbox was closed while the image was loading — abort the slide.
-      if (!lightbox || lightbox.hidden) {
-        lbAnimating = false
-        return
-      }
+    // The thumbnail is ready for an immediate transition; the full document
+    // upgrades in-place when its background request completes.
+    showThumbnailUntilReady(incoming, src, getThumbSrc(item))
 
-      // Double rAF so the browser paints the parked position before sliding
+    // Double rAF so the browser paints the parked position before sliding.
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          applySlide(incoming, T_CENTER)
-          applySlide(active,   dir > 0 ? T_OFF_LEFT : T_OFF_RIGHT)
+        if (!lightbox || lightbox.hidden) {
+          lbAnimating = false
+          return
+        }
 
-          // Update title halfway through
-          setTimeout(() => {
-            if (lbTitle) {
-              lbTitle.textContent  = title
-              lbTitle.style.opacity = '1'
-            }
-            updateLbButtons()
-          }, SLIDE_MS / 2)
+        applySlide(incoming, T_CENTER)
+        applySlide(active,   dir > 0 ? T_OFF_LEFT : T_OFF_RIGHT)
 
-          // Swap slots once the slide is done; leave the outgoing image off-screen
-          setTimeout(() => {
-            lbSlot      = 1 - lbSlot
-            lbAnimating = false
-          }, SLIDE_MS + 20)
-        })
+        // Update title halfway through
+        setTimeout(() => {
+          if (lbTitle) {
+            lbTitle.textContent  = title
+            lbTitle.style.opacity = '1'
+          }
+          updateLbButtons()
+        }, SLIDE_MS / 2)
+
+        // Swap slots once the slide is done; leave the outgoing image off-screen
+        setTimeout(() => {
+          lbSlot      = 1 - lbSlot
+          lbAnimating = false
+        }, SLIDE_MS + 20)
       })
     })
   }
@@ -245,9 +291,15 @@ export function initGallery(): void {
     // Active image - centered, no transition
     const active = getActive()
     applyInstant(active, T_CENTER)
-    active.src = items[lbIdx]?.dataset['src']   ?? ''
+    const activeItem = items[lbIdx]
+    const activeSrc = activeItem?.dataset['src'] ?? ''
+    active.src = activeItem ? getThumbSrc(activeItem) || activeSrc : ''
     active.alt = items[lbIdx]?.dataset['title'] ?? ''
     active.style.zIndex = '1'
+
+    // Show the already-available thumbnail immediately, then replace it with
+    // the decoded original without flashing an empty lightbox frame.
+    if (activeItem) showThumbnailUntilReady(active, activeSrc, getThumbSrc(activeItem))
 
     // Idle image - parked off right, invisible
     const incoming = getIncoming()
