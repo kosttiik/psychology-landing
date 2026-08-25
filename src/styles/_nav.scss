@@ -262,6 +262,8 @@
     transition: color 0.25s;
 
     &:hover { color: var(--gold); }
+
+    &.is-active { color: var(--gold); }
   }
 
   &__cta {

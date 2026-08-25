@@ -312,13 +312,26 @@
 
   // Content
   &__content {
+    text-align: center;
+
     @include respond($bp-lg) { order: -1; }
   }
 
   &__eyebrow {
     @include label;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    text-align: center;
     color: var(--gold);
-    margin-bottom: 16px;
+    margin: 0 auto 12px;
+    font-size: clamp(9px, 0.78vw, 11px);
+    letter-spacing: clamp(1.8px, 0.2vw, 2.6px);
+    line-height: 1.25;
+
+    // On a wide hero the professional designation reads as one quiet,
+    // centered line. Narrow screens may wrap naturally instead of overflowing.
+    @media (min-width: 1025px) { white-space: nowrap; }
   }
 
   &__title {
@@ -340,9 +353,19 @@
     line-height: 1.75;
     color: var(--text-muted);
     max-width: 400px;
-    margin-bottom: 36px;
+    margin: 0 auto 36px;
 
     @include respond($bp-lg) { margin-inline: auto; }
+  }
+
+  &__meta {
+    margin: 16px auto 0;
+    width: 100%;
+    text-align: center;
+    color: rgba(245, 240, 232, 0.58);
+    font-size: 12px;
+    letter-spacing: 0.8px;
+    line-height: 1.5;
   }
 
   &__cta {

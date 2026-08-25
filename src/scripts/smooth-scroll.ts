@@ -3,6 +3,7 @@
 import Lenis from 'lenis'
 
 let lenis: Lenis | null = null
+let anchorScrollActive = false
 
 const easeOutExpo = (t: number): number => Math.min(1, 1.001 - Math.pow(2, -10 * t))
 
@@ -24,14 +25,23 @@ function initAnchors(): void {
       history.pushState(null, '', url)
 
       if (lenis) {
+        anchorScrollActive = true
         // Defer one frame: when the click also closes the mobile menu, the
         // menu's own handler calls lenis.start(), and start() resets any
         // in-flight animation - starting the scroll afterwards keeps it alive.
         requestAnimationFrame(() => {
-          lenis?.scrollTo(target, { duration: 1.15, easing: easeOutExpo, force: true })
+          lenis?.scrollTo(target, {
+            duration: 1.15,
+            easing: easeOutExpo,
+            force: true,
+            userData: { anchorNavigation: true },
+            onStart: () => { anchorScrollActive = true },
+            onComplete: () => { anchorScrollActive = false },
+          })
         })
       } else {
         // Reduced-motion / no Lenis: jump without smoothing.
+        anchorScrollActive = false
         target.scrollIntoView()
       }
     })
@@ -52,10 +62,36 @@ export function initSmoothScroll(): Lenis | null {
       requestAnimationFrame(raf)
     }
     requestAnimationFrame(raf)
+
+    // A wheel/touch gesture starts a new Lenis scroll with empty user data.
+    // Treat that as a manual interruption so the scroll spy resumes at once.
+    lenis.on('scroll', (instance) => {
+      if (anchorScrollActive && !instance.userData['anchorNavigation']) {
+        anchorScrollActive = false
+      }
+    })
   }
 
   initAnchors()
   return lenis
+}
+
+export function isAnchorScrollActive(): boolean {
+  return anchorScrollActive
+}
+
+// Re-apply a deep-link hash after late layout work (fonts/photos) has settled.
+// Browsers can restore the old pixel offset before that work finishes.
+export function syncInitialHash(): void {
+  const id = location.hash.slice(1)
+  if (!id) return
+  const target = document.getElementById(id)
+  if (!target) return
+
+  requestAnimationFrame(() => {
+    if (lenis) lenis.scrollTo(target, { immediate: true, force: true })
+    else target.scrollIntoView()
+  })
 }
 
 // Scroll lock for overlays. Pairs lenis.stop() with a plain overflow lock so

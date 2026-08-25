@@ -1,5 +1,5 @@
 import './styles/main.scss'
-import { initSmoothScroll } from './scripts/smooth-scroll'
+import { initSmoothScroll, syncInitialHash } from './scripts/smooth-scroll'
 import { initNav } from './scripts/nav'
 import { initScrollReveal } from './scripts/scroll-reveal'
 import { initParallax } from './scripts/parallax'
@@ -41,53 +41,53 @@ function initScrollHint(): void {
   window.addEventListener('scroll', onScroll, { passive: true })
 }
 
-// Init after fonts + DOM ready
+// Init as soon as the DOM is ready. The first screen must remain visible while
+// optional fonts and photo layout enhancements settle in the background.
 document.addEventListener('DOMContentLoaded', () => {
   // Dynamic copyright year
   const yearEl = document.getElementById('footer-year')
   if (yearEl) yearEl.textContent = String(new Date().getFullYear())
 
-  // Wait for fonts so we don't animate before text is laid out, but cap the
-  // wait: on a slow network the page must show up anyway.
-  const fontsReady = Promise.race([
-    document.fonts.ready,
-    new Promise((resolve) => setTimeout(resolve, 1500)),
-  ])
+  initNav()
+  initScrollReveal()
+  initToggle()
+  initTabs()
+  initGallery()
+  initTilt()
+  initTelegram()
+  initScrollHint()
 
-  // Resolve the adaptive photo layout in parallel with fonts; both are capped,
-  // so the page never waits long. Settling it before we reveal the body means a
-  // missing portrait collapses the layout without ever flashing a broken image.
-  Promise.all([fontsReady, initPhotos()]).then(() => {
-    document.documentElement.classList.add('fonts-ready')
-
-    initNav()
-    initScrollReveal()
+  const setupParallax = (): void => {
     initPolaroids()
-    initToggle()
-    initTabs()
-    initGallery()
-    initTilt()
-    initTelegram()
-    initScrollHint()
 
-    // Drive parallax from Lenis so it stays in sync with the smooth scroll
+    // Drive parallax from Lenis so it stays in sync with the smooth scroll.
     const updateParallax = initParallax()
-    if (updateParallax) {
-      if (lenis) {
-        lenis.on('scroll', () => updateParallax(window.scrollY))
-      } else {
-        // Coalesce native scroll events into one update per frame
-        let ticking = false
-        window.addEventListener('scroll', () => {
-          if (ticking) return
-          ticking = true
-          requestAnimationFrame(() => {
-            updateParallax(window.scrollY)
-            ticking = false
-          })
-        }, { passive: true })
-      }
-      updateParallax(window.scrollY)
+    if (!updateParallax) return
+
+    if (lenis) {
+      lenis.on('scroll', () => updateParallax(window.scrollY))
+    } else {
+      // Coalesce native scroll events into one update per frame.
+      let ticking = false
+      window.addEventListener('scroll', () => {
+        if (ticking) return
+        ticking = true
+        requestAnimationFrame(() => {
+          updateParallax(window.scrollY)
+          ticking = false
+        })
+      }, { passive: true })
     }
+    updateParallax(window.scrollY)
+  }
+
+  // Resolve the adaptive photo layout without blocking first paint. The
+  // fallback still initializes motion if a portrait request fails.
+  void initPhotos().then(() => {
+    setupParallax()
+    syncInitialHash()
+  }, () => {
+    setupParallax()
+    syncInitialHash()
   })
 })
