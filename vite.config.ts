@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => {
       outDir: "../dist",
       emptyOutDir: true,
       rollupOptions: {
-        input: "src/index.html",
+        input: "index.html",
       },
     },
     css: {
