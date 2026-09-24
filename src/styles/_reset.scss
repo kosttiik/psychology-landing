@@ -5,11 +5,14 @@
 }
 
 html {
+  background: var(--bg-dark);
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
   // No blue/grey flash rectangle on tap (Android Chrome / iOS Safari)
   -webkit-tap-highlight-color: transparent;
 }
+
+html.fonts-loading body { visibility: hidden; }
 
 body {
   background-color: var(--bg-dark);

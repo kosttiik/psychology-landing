@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="fonts-loading">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,10 +31,14 @@
   <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.jpg" />
   <meta name="twitter:image:alt" content="Мария Попова — когнитивно-поведенческий психотерапевт. Все ответы внутри Вас." />
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <noscript><style>html.fonts-loading body { visibility: visible; }</style></noscript>
+
+  <!-- Local fonts avoid a visible font swap and work on Pages and self-hosted builds. -->
+  <link rel="preload" href="/fonts/jost-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/cormorant-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/cormorant-italic-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/caveat-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
 
   <link rel="icon" href="/favicon.ico" sizes="32x32" />
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />

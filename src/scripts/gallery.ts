@@ -1,4 +1,8 @@
 import { stopScroll, startScroll } from './smooth-scroll'
+import { gsap } from 'gsap'
+import Flip from 'gsap/Flip'
+
+gsap.registerPlugin(Flip)
 
 export function initGallery(): void {
   const track = document.getElementById('gallery-track')
@@ -96,40 +100,34 @@ export function initGallery(): void {
       || item.querySelector<HTMLImageElement>('.gallery__item-img img')?.src
       || ''
 
-  // Full-size documents are small enough to warm progressively. Keeping the
-  // promises in a cache means opening the lightbox or moving to the next
-  // document never starts a second request for the same file.
-  const fullImageCache = new Map<string, Promise<boolean>>()
-  const preloadFullImage = (src: string): Promise<boolean> => {
-    if (!src) return Promise.resolve(false)
+  // Keep decoded originals ready so the lightbox can swap without a network wait.
+  const fullImageCache = new Map<string, Promise<HTMLImageElement | null>>()
+  const preloadFullImage = (src: string): Promise<HTMLImageElement | null> => {
+    if (!src) return Promise.resolve(null)
     const cached = fullImageCache.get(src)
     if (cached) return cached
 
-    const promise = new Promise<boolean>(resolve => {
-      const image = new Image()
-      image.decoding = 'async'
-      image.onload = () => resolve(true)
-      image.onerror = () => resolve(false)
-      image.src = src
+    const image = new Image()
+    image.decoding = 'async'
+    const promise = new Promise<HTMLImageElement | null>(resolve => {
+      image.onload = () => {
+        void image.decode().then(() => resolve(image), () => resolve(image))
+      }
+      image.onerror = () => resolve(null)
     })
+    image.src = src
     fullImageCache.set(src, promise)
     return promise
   }
 
-  const warmAround = (index: number): void => {
-    ;[index - 1, index, index + 1]
-      .filter(i => i >= 0 && i < items.length)
-      .forEach(i => { void preloadFullImage(items[i]?.dataset['src'] ?? '') })
+  const warmAllDocuments = (): void => {
+    items.forEach(item => { void preloadFullImage(item.dataset['src'] ?? '') })
   }
-
-  // Start preparing the first page after the initial screen has settled. Hover
-  // and focus warm the adjacent documents too, so a user can move through the
-  // gallery without waiting for a cold full-size request.
-  window.setTimeout(() => warmAround(0), 900)
-  items.forEach((item, i) => {
-    item.addEventListener('pointerenter', () => warmAround(i))
-    item.addEventListener('focus', () => warmAround(i))
-  })
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+  }
+  if (idleWindow.requestIdleCallback) idleWindow.requestIdleCallback(warmAllDocuments, { timeout: 2000 })
+  else window.setTimeout(warmAllDocuments, 900)
 
   // Track navigation
   function goTo(index: number) {
@@ -176,159 +174,172 @@ export function initGallery(): void {
   })
   ro.observe(track)
 
-  // Lightbox. Two img slots: lbImgEls[lbSlot] is visible, the other is idle
+  // Two centered slots make image changes independent of image dimensions.
   let lbSlot = 0
-  let lbAnimating = false
+  let lbTimeline: gsap.core.Timeline | null = null
+  let lbClosing = false
+  let focusOrigin: HTMLElement | null = null
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  // Images sit centered at rest; the off-* positions park them past the edges
-  const T_CENTER    = 'translate(-50%, -50%)'
-  const T_OFF_RIGHT = 'translate(calc(-50% + 100vw), -50%)'
-  const T_OFF_LEFT  = 'translate(calc(-50% - 100vw), -50%)'
-
-  const SLIDE_MS   = 380
-  const SLIDE_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
-
-  function applyInstant(img: HTMLImageElement, tf: string) {
-    img.style.transition = 'none'
-    img.style.transform  = tf
-  }
-
-  function applySlide(img: HTMLImageElement, tf: string) {
-    img.style.transition = `transform ${SLIDE_MS}ms ${SLIDE_EASE}`
-    img.style.transform  = tf
-  }
-
-  // Put the ready thumbnail into a slot immediately, then upgrade it when the
-  // original finishes. The pending-src guard prevents a late response from an
-  // older navigation from replacing a newer document.
-  function showThumbnailUntilReady(img: HTMLImageElement, src: string, fallbackSrc: string): void {
+  function prepareLbImage(img: HTMLImageElement, index: number): void {
+    const item = items[index]
+    const src = item?.dataset['src'] ?? ''
     img.dataset['pendingSrc'] = src
-    if (fallbackSrc && img.getAttribute('src') !== fallbackSrc) img.src = fallbackSrc
+    img.alt = item?.dataset['title'] ?? ''
+    img.src = item ? getThumbSrc(item) || src : ''
     void preloadFullImage(src).then(loaded => {
-      if (loaded && img.dataset['pendingSrc'] === src && img.getAttribute('src') !== src) {
-        img.src = src
-      }
+      if (loaded && img.dataset['pendingSrc'] === src) img.src = loaded.src
     })
   }
 
   function getActive()   { return lbImgEls[lbSlot]! }
   function getIncoming() { return lbImgEls[1 - lbSlot]! }
 
-  function setLbImage(index: number, dir: 1 | -1 | 0) {
+  function setLbImage(index: number, dir: 1 | -1 | 0): void {
     if (!lbTitle) return
-    const item  = items[index]
-    const src   = item?.dataset['src']   ?? ''
+    if (lbClosing) return
+    const item = items[index]
     const title = item?.dataset['title'] ?? ''
 
     if (dir === 0) {
-      getActive().src      = src
-      getActive().alt      = title
-      lbTitle.textContent  = title
+      prepareLbImage(getActive(), index)
+      gsap.set(getActive(), { autoAlpha: 1, scale: 1, clearProps: 'filter,transform' })
+      gsap.set(getIncoming(), { autoAlpha: 0, scale: 1, clearProps: 'filter,transform' })
+      lbTitle.textContent = title
+      gsap.set(lbTitle, { autoAlpha: 1, y: 0, clearProps: 'transform' })
       updateLbButtons()
       return
     }
 
-    if (lbAnimating) return
-    lbAnimating = true
-
+    lbTimeline?.progress(1)
     const active   = getActive()
     const incoming = getIncoming()
+    prepareLbImage(incoming, index)
+    updateLbButtons()
 
-    // Park the idle slot off-screen on the entry side *before* loading, so the
-    // image it held two steps ago is never visible while the new one decodes.
-    applyInstant(incoming, dir > 0 ? T_OFF_RIGHT : T_OFF_LEFT)
-    incoming.alt = title
-
-    // Fade title out for feedback; the current image stays put until it's ready.
-    if (lbTitle) {
-      lbTitle.style.transition = 'opacity 0.15s ease'
-      lbTitle.style.opacity    = '0'
+    if (reduceMotion) {
+      gsap.set(active, { autoAlpha: 0, scale: 1, clearProps: 'filter,transform' })
+      gsap.set(incoming, { autoAlpha: 1, scale: 1, clearProps: 'filter,transform' })
+      lbTitle.textContent = title
+      gsap.set(lbTitle, { autoAlpha: 1, y: 0, clearProps: 'transform' })
+      lbSlot = 1 - lbSlot
+      return
     }
 
-    // The thumbnail is ready for an immediate transition; the full document
-    // upgrades in-place when its background request completes.
-    showThumbnailUntilReady(incoming, src, getThumbSrc(item))
+    const finish = (): void => {
+      gsap.set(active, { autoAlpha: 0, scale: 1, clearProps: 'filter,transform' })
+      gsap.set(incoming, { autoAlpha: 1, scale: 1, clearProps: 'filter,transform' })
+      gsap.set(lbTitle, { y: 0, clearProps: 'transform' })
+      lbSlot = 1 - lbSlot
+      lbTimeline = null
+    }
 
-    // Double rAF so the browser paints the parked position before sliding.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (!lightbox || lightbox.hidden) {
-          lbAnimating = false
-          return
-        }
-
-        applySlide(incoming, T_CENTER)
-        applySlide(active,   dir > 0 ? T_OFF_LEFT : T_OFF_RIGHT)
-
-        // Update title halfway through
-        setTimeout(() => {
-          if (lbTitle) {
-            lbTitle.textContent  = title
-            lbTitle.style.opacity = '1'
-          }
-          updateLbButtons()
-        }, SLIDE_MS / 2)
-
-        // Swap slots once the slide is done; leave the outgoing image off-screen
-        setTimeout(() => {
-          lbSlot      = 1 - lbSlot
-          lbAnimating = false
-        }, SLIDE_MS + 20)
-      })
-    })
+    lbTimeline = gsap.timeline({ onComplete: finish })
+      .to(active, { autoAlpha: 0, scale: 0.986, filter: 'blur(2px)', duration: 0.26, ease: 'power2.in' }, 0)
+      .fromTo(incoming,
+        { autoAlpha: 0, scale: 1.014, filter: 'blur(3px)' },
+        { autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 0.46, ease: 'power3.out' },
+        0.08,
+      )
+      .to(lbTitle, { autoAlpha: 0, y: 8, duration: 0.16, ease: 'power1.in' }, 0)
+      .call(() => { lbTitle.textContent = title }, [], 0.17)
+      .fromTo(lbTitle,
+        { autoAlpha: 0, y: 8 },
+        { autoAlpha: 1, y: 0, duration: 0.27, ease: 'power3.out' },
+        0.19,
+      )
   }
 
   function openLightbox(index: number) {
     if (!lightbox) return
+    lbTimeline?.progress(1)
     lbIdx    = index
     lbSlot   = 0
-    lbAnimating = false
-
-    lightbox.classList.remove('is-closing')
+    lbClosing = false
+    focusOrigin = items[index] ?? null
     lightbox.hidden = false
     stopScroll()
 
-    // Active image - centered, no transition
     const active = getActive()
-    applyInstant(active, T_CENTER)
-    const activeItem = items[lbIdx]
-    const activeSrc = activeItem?.dataset['src'] ?? ''
-    active.src = activeItem ? getThumbSrc(activeItem) || activeSrc : ''
-    active.alt = items[lbIdx]?.dataset['title'] ?? ''
-    active.style.zIndex = '1'
-
-    // Show the already-available thumbnail immediately, then replace it with
-    // the decoded original without flashing an empty lightbox frame.
-    if (activeItem) showThumbnailUntilReady(active, activeSrc, getThumbSrc(activeItem))
-
-    // Idle image - parked off right, invisible
+    gsap.set(active, { autoAlpha: 1, scale: 1, clearProps: 'filter,transform' })
+    prepareLbImage(active, lbIdx)
     const incoming = getIncoming()
-    applyInstant(incoming, T_OFF_RIGHT)
     incoming.src = ''
-    incoming.style.zIndex = '1'
+    gsap.set(incoming, { autoAlpha: 0, scale: 1, clearProps: 'filter,transform' })
 
     if (lbTitle) {
-      lbTitle.style.transition = 'none'
-      lbTitle.style.opacity    = '1'
-      lbTitle.textContent      = items[lbIdx]?.dataset['title'] ?? ''
+      lbTitle.textContent = items[lbIdx]?.dataset['title'] ?? ''
+      gsap.set(lbTitle, { autoAlpha: 0, y: 10 })
     }
 
     updateLbButtons()
+
+    const origin = items[index]?.querySelector<HTMLImageElement>('.gallery__document img')
+    if (!reduceMotion && origin) {
+      Flip.fit(active, origin, { scale: true })
+      const state = Flip.getState(active)
+      gsap.set(active, { clearProps: 'transform' })
+      const duration = 0.72
+      gsap.set(lightbox, { autoAlpha: 0 })
+      lbTimeline = Flip.from(state, {
+        duration,
+        ease: 'power3.inOut',
+        scale: true,
+      })
+      lbTimeline.fromTo(lightbox,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.46, ease: 'power2.out' },
+        0,
+      )
+      if (lbTitle) lbTimeline.fromTo(lbTitle,
+        { autoAlpha: 0, y: 10 },
+        { autoAlpha: 1, y: 0, duration: 0.36, ease: 'power3.out' },
+        0.25,
+      )
+      lbTimeline.eventCallback('onComplete', () => {
+        gsap.set(active, { clearProps: 'transform' })
+        lbTimeline = null
+      })
+    } else {
+      gsap.set(lightbox, { autoAlpha: 1 })
+      if (lbTitle) gsap.set(lbTitle, { autoAlpha: 1, y: 0, clearProps: 'transform' })
+    }
+
     lbClose?.focus()
   }
 
   function closeLightbox() {
-    if (!lightbox || lightbox.hidden) return
-    lightbox.classList.add('is-closing')
-    lightbox.addEventListener('animationend', () => {
+    if (!lightbox || lightbox.hidden || lbClosing) return
+    lbClosing = true
+    lbTimeline?.progress(1)
+    const active = getActive()
+    const origin = items[lbIdx]?.querySelector<HTMLImageElement>('.gallery__document img')
+    const finish = (): void => {
       lightbox.hidden = true
-      lightbox.classList.remove('is-closing')
+      gsap.set(lightbox, { clearProps: 'opacity,visibility' })
+      gsap.set(lbImgEls, { clearProps: 'transform,opacity,visibility,filter' })
+      if (lbTitle) gsap.set(lbTitle, { clearProps: 'transform,opacity,visibility' })
       startScroll()
-    }, { once: true })
+      focusOrigin?.focus()
+      focusOrigin = null
+      lbTimeline = null
+      lbClosing = false
+    }
+
+    if (reduceMotion || !origin) {
+      finish()
+      return
+    }
+
+    const state = Flip.getState(active)
+    Flip.fit(active, origin, { scale: true })
+    lbTimeline = Flip.from(state, { duration: 0.62, ease: 'power3.inOut', scale: true })
+    lbTimeline.to(lightbox, { autoAlpha: 0, duration: 0.52, ease: 'power2.in' }, 0)
+    lbTimeline.eventCallback('onComplete', finish)
   }
 
   function navigateLb(dir: 1 | -1) {
-    if (lbAnimating) return
+    if (lbClosing) return
     const next = lbIdx + dir
     if (next < 0 || next >= items.length) return
     lbIdx = next

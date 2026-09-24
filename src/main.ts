@@ -13,6 +13,11 @@ import { initTelegram } from './scripts/telegram'
 
 const lenis = initSmoothScroll()
 
+// Keep the first paint hidden until every font used in the initial layout has
+// loaded. A failed font request settles this promise too, so fallback fonts show.
+const revealPage = (): void => document.documentElement.classList.remove('fonts-loading')
+void document.fonts.ready.then(revealPage, revealPage)
+
 // Scroll hint: show after 2s of no scroll, hide for good on first scroll
 function initScrollHint(): void {
   const hint = document.querySelector<HTMLElement>('.scroll-hint')
