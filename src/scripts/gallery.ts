@@ -8,7 +8,11 @@ export function initGallery(): void {
   const track = document.getElementById('gallery-track')
   const prevBtn = document.querySelector<HTMLButtonElement>('.gallery__arrow--prev')
   const nextBtn = document.querySelector<HTMLButtonElement>('.gallery__arrow--next')
-  const dotsContainer = document.getElementById('gallery-dots')
+  const progress = document.getElementById('gallery-progress')
+  const progressInput = progress?.querySelector<HTMLInputElement>('.gallery__progress-input')
+  const progressFill = progress?.querySelector<HTMLElement>('.gallery__progress-fill')
+  const progressThumb = progress?.querySelector<HTMLElement>('.gallery__progress-thumb')
+  const progressKnob = progress?.querySelector<HTMLElement>('.gallery__progress-knob')
   const lightbox = document.getElementById('gallery-lightbox')
   const lbTitle = lightbox?.querySelector<HTMLElement>('.gallery__lb-title')
   const lbClose = lightbox?.querySelector<HTMLButtonElement>('.gallery__lb-close')
@@ -23,6 +27,13 @@ export function initGallery(): void {
 
   let current = 0
   let lbIdx = 0
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const progressFillTo = progressFill && !reduceMotion
+    ? gsap.quickTo(progressFill, 'scaleX', { duration: 0.18, ease: 'power3.out' })
+    : null
+  const progressThumbTo = progressThumb && !reduceMotion
+    ? gsap.quickTo(progressThumb, 'left', { duration: 0.18, ease: 'power3.out' })
+    : null
 
   // Prevent right-click / long-press "save image" on all diploma images
   items.forEach(item => {
@@ -68,26 +79,17 @@ export function initGallery(): void {
   const getPageCount = (): number =>
     Math.max(1, items.length - getItemsPerPage() + 1)
 
-  // Dots
-  function buildDots() {
-    if (!dotsContainer) return
-    dotsContainer.innerHTML = ''
-    const count = getPageCount()
-    for (let i = 0; i < count; i++) {
-      const dot = document.createElement('button')
-      dot.className = 'gallery__dot'
-      dot.setAttribute('aria-label', `Страница ${i + 1}`)
-      dot.addEventListener('click', () => goTo(i))
-      dotsContainer.appendChild(dot)
-    }
-  }
-
-  function updateDots() {
-    if (!dotsContainer) return
-    const safeIdx = Math.min(current, getPageCount() - 1)
-    dotsContainer.querySelectorAll('.gallery__dot').forEach((d, i) => {
-      d.classList.toggle('is-active', i === safeIdx)
-    })
+  function updateProgress() {
+    if (!progressInput || !progress) return
+    const maxScroll = Math.max(0, track!.scrollWidth - track!.clientWidth)
+    const ratio = maxScroll ? Math.max(0, Math.min(1, track!.scrollLeft / maxScroll)) : 0
+    progressInput.value = String(Math.round(ratio * 1000))
+    progressInput.setAttribute('aria-valuetext', `${Math.round(ratio * 100)}% ленты`)
+    if (progressFillTo) progressFillTo(ratio)
+    else if (progressFill) gsap.set(progressFill, { scaleX: ratio })
+    const thumbLeft = 5 + ratio * Math.max(0, progress.clientWidth - 10)
+    if (progressThumbTo) progressThumbTo(thumbLeft)
+    else if (progressThumb) gsap.set(progressThumb, { left: thumbLeft })
   }
 
   function updateArrows() {
@@ -133,12 +135,15 @@ export function initGallery(): void {
   function goTo(index: number) {
     current = Math.max(0, Math.min(index, getPageCount() - 1))
     track!.scrollTo({ left: current * getItemWidth(), behavior: 'smooth' })
-    updateDots()
     updateArrows()
   }
 
   prevBtn?.addEventListener('click', () => goTo(current - 1))
   nextBtn?.addEventListener('click', () => goTo(current + 1))
+  progressInput?.addEventListener('input', () => {
+    const maxScroll = track.scrollWidth - track.clientWidth
+    track.scrollLeft = Number(progressInput.value) / 1000 * maxScroll
+  })
 
   track.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft')  goTo(current - 1)
@@ -146,9 +151,24 @@ export function initGallery(): void {
   })
 
   let scrollTimer: ReturnType<typeof setTimeout>
+  let scrollFrame = 0
   track.addEventListener('scroll', () => {
     clearTimeout(scrollTimer)
+    if (progress && !progress.classList.contains('is-scrolling')) {
+      progress.classList.add('is-scrolling')
+      if (!reduceMotion && progressKnob) {
+        gsap.to(progressKnob, { scale: 1.35, duration: 0.24, ease: 'power3.out', overwrite: true })
+      }
+    }
     scrollTimer = setTimeout(() => {
+      progress?.classList.remove('is-scrolling')
+      if (!reduceMotion && progressKnob) {
+        gsap.to(progressKnob, { scale: 1, duration: 0.52, ease: 'elastic.out(1, 0.7)', overwrite: true })
+      }
+    }, 140)
+    if (scrollFrame) return
+    scrollFrame = requestAnimationFrame(() => {
+      scrollFrame = 0
       const maxScroll = track.scrollWidth - track.clientWidth
       const pageCount = getPageCount()
       if (track.scrollLeft <= 1) {
@@ -161,15 +181,14 @@ export function initGallery(): void {
           current = Math.max(0, Math.min(Math.round(track.scrollLeft / iw), pageCount - 1))
         }
       }
-      updateDots()
+      updateProgress()
       updateArrows()
-    }, 80)
+    })
   }, { passive: true })
 
   const ro = new ResizeObserver(() => {
     current = Math.max(0, Math.min(current, getPageCount() - 1))
-    buildDots()
-    updateDots()
+    updateProgress()
     updateArrows()
   })
   ro.observe(track)
@@ -179,8 +198,6 @@ export function initGallery(): void {
   let lbTimeline: gsap.core.Timeline | null = null
   let lbClosing = false
   let focusOrigin: HTMLElement | null = null
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
   function prepareLbImage(img: HTMLImageElement, index: number): void {
     const item = items[index]
     const src = item?.dataset['src'] ?? ''
@@ -279,7 +296,7 @@ export function initGallery(): void {
       Flip.fit(active, origin, { scale: true })
       const state = Flip.getState(active)
       gsap.set(active, { clearProps: 'transform' })
-      const duration = 0.72
+      const duration = 0.68
       gsap.set(lightbox, { autoAlpha: 0 })
       lbTimeline = Flip.from(state, {
         duration,
@@ -333,7 +350,7 @@ export function initGallery(): void {
 
     const state = Flip.getState(active)
     Flip.fit(active, origin, { scale: true })
-    lbTimeline = Flip.from(state, { duration: 0.62, ease: 'power3.inOut', scale: true })
+    lbTimeline = Flip.from(state, { duration: 0.58, ease: 'power3.inOut', scale: true })
     lbTimeline.to(lightbox, { autoAlpha: 0, duration: 0.52, ease: 'power2.in' }, 0)
     lbTimeline.eventCallback('onComplete', finish)
   }
@@ -378,7 +395,6 @@ export function initGallery(): void {
   }, { passive: true })
 
   // Init
-  buildDots()
-  updateDots()
+  updateProgress()
   updateArrows()
 }

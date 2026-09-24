@@ -984,7 +984,7 @@
             </div>
             <p class="gallery__item-label">ACT и CFT</p>
           </button>
-          <button class="gallery__item" data-src="/diplomas/internship-open-doors.jpg" data-title="Сертификат стажировки — социальный кабинет «Открытые двери»">
+          <button class="gallery__item" data-orientation="portrait" data-src="/diplomas/internship-open-doors.jpg" data-title="Сертификат стажировки — социальный кабинет «Открытые двери»">
             <div class="gallery__item-img">
               <span class="gallery__document"><img src="/diplomas/internship-open-doors-thumb.jpg" alt="Сертификат стажировки в социальном кабинете «Открытые двери» — психолог Мария Попова" loading="eager" decoding="async"></span>
             </div>
@@ -1026,7 +1026,7 @@
             </div>
             <p class="gallery__item-label">Супервизия</p>
           </button>
-          <button class="gallery__item" data-src="/diplomas/practicum-crisis-counseling.jpg" data-title="Производственная практика — кризисное консультирование детей (онлайн)">
+          <button class="gallery__item" data-orientation="portrait" data-src="/diplomas/practicum-crisis-counseling.jpg" data-title="Производственная практика — кризисное консультирование детей (онлайн)">
             <div class="gallery__item-img">
               <span class="gallery__document"><img src="/diplomas/practicum-crisis-counseling-thumb.jpg" alt="Отчёт по производственной практике: кризисное консультирование детей — Мария Попова" loading="eager" decoding="async"></span>
             </div>
@@ -1039,7 +1039,13 @@
         </button>
       </div>
 
-      <div class="gallery__dots" id="gallery-dots"></div>
+      <div class="gallery__progress" id="gallery-progress">
+        <input class="gallery__progress-input" type="range" min="0" max="1000" value="0" aria-label="Положение в ленте документов" aria-valuetext="0% ленты">
+        <span class="gallery__progress-rail" aria-hidden="true">
+          <span class="gallery__progress-fill"></span>
+          <span class="gallery__progress-thumb"><span class="gallery__progress-knob"></span></span>
+        </span>
+      </div>
     </div>
 
     <!-- Lightbox -->

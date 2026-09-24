@@ -99,6 +99,7 @@
 
 .gallery__track {
   display: flex;
+  align-items: flex-start;
   gap: 24px;
   overflow-x: auto;
   // Free, momentum horizontal scroll on touch — no snap, so swipes glide
@@ -162,15 +163,11 @@
 .gallery__item-img {
   position: relative;
   width: 100%;
-  // Landscape frame — matches the orientation of most documents (A4 landscape).
   aspect-ratio: 7 / 5;
-  // Keep the paper's drop shadow visible beyond the mat. The sheen is sized
-  // to this frame, so it does not need a clipping parent.
   overflow: visible;
-  // A quiet paper-white mount keeps attention on the credential itself.
-  background: #F8F7F3;
-  border-radius: var(--r-card) var(--r-card) 0 0;
-  padding: 16px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,16 +180,11 @@
     height: fit-content;
     max-width: 100%;
     max-height: 100%;
-    overflow: hidden;
-    border-radius: 2px;
+    overflow: visible;
+    border-radius: 0;
     line-height: 0;
-    box-shadow:
-      0 1px 2px rgba(44,62,53,0.1),
-      0 5px 14px rgba(44,62,53,0.13);
 
     img {
-      // Auto-size so the element box hugs the document itself — that lets the
-      // drop shadow + hairline frame the real paper edges (not the mat).
       max-width: 100%;
       max-height: 100%;
       width: auto;
@@ -200,9 +192,7 @@
       display: block;
       box-shadow: none;
       opacity: 0;
-      transition:
-        transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.35s ease;
+      transition: opacity 0.35s ease;
       user-select: none;
       -webkit-user-drag: none;
       -webkit-touch-callout: none;
@@ -213,10 +203,9 @@
 
   }
 
-  @media (hover: hover) {
-    .gallery__item:hover & img { transform: scale(1.045); }
-  }
 }
+
+.gallery__item[data-orientation='portrait'] .gallery__item-img { aspect-ratio: 7 / 10; }
 
 .gallery__item-label {
   font-family: var(--font-sans);
@@ -239,34 +228,82 @@
   }
 }
 
-// Dots
+// Seek through the track; GSAP eases the visual marker to each live scroll sample.
 
-.gallery__dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+.gallery__progress {
+  position: relative;
+  width: clamp(112px, 16vw, 184px);
+  height: 28px;
   margin-top: 32px;
+  margin-inline: auto;
 }
 
-.gallery__dot {
+.gallery__progress-input {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  appearance: none;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+  opacity: 0;
+
+  &:focus-visible + .gallery__progress-rail .gallery__progress-knob {
+    box-shadow: 0 0 0 4px rgba(74,124,111,0.2), 0 0 18px rgba(74,124,111,0.35);
+  }
+}
+
+.gallery__progress-rail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 13px 5px auto;
+    height: 2px;
+    border-radius: 99px;
+    background: rgba(44,62,53,0.14);
+  }
+}
+
+.gallery__progress-fill {
+  position: absolute;
+  top: 13px;
+  left: 5px;
+  width: calc(100% - 10px);
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #4a7c6f, #76a99b);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.gallery__progress-thumb {
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  will-change: left;
+}
+
+.gallery__progress-knob {
   width: 8px;
   height: 8px;
-  border-radius: 99px;
-  border: none;
-  background: rgba(44,62,53,0.18);
-  cursor: pointer;
-  padding: 0;
-  // Spring on width so the active dot stretches into a pill with a little snap.
-  transition:
-    width 0.4s cubic-bezier(0.34, 1.4, 0.4, 1),
-    background 0.3s var(--ease);
-
-  &.is-active {
-    width: 26px;
-    background: var(--green-mid);
-  }
-
-  &:hover:not(.is-active) { background: rgba(74,124,111,0.45); }
+  border: 2px solid var(--bg-light);
+  border-radius: 50%;
+  background: var(--green-mid);
+  box-shadow: 0 0 0 1px var(--green-mid), 0 2px 8px rgba(44,62,53,0.18);
+  transition: box-shadow 0.28s ease;
 }
 
 // Lightbox
@@ -343,19 +380,15 @@
   top: 48%;
   left: 50%;
   transform: translate(-50%, -50%);
-  // Big enough to actually read the document; portrait docs are height-bound,
-  // landscape certificates width-bound.
-  // Keep the thumbnail and the full document in the same rendered frame while
-  // the larger source is decoding, so navigation never starts with a smaller
-  // image that suddenly jumps to its final size.
-  width: min(1040px, 90vw);
-  max-width: min(1040px, 90vw);
-  max-height: 78vh;
+  // Keep the source aspect ratio: portrait certificates become narrow and
+  // tall, while landscape certificates use the available width.
+  width: auto;
   height: auto;
+  max-width: 90vw;
+  max-height: 78vh;
   object-fit: contain;
   border: 0;
-  border-radius: 2px;
-  box-shadow: 0 24px 72px rgba(0,0,0,0.38);
+  border-radius: 0;
   will-change: transform;
   user-select: none;
   -webkit-user-drag: none;
