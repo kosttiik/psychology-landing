@@ -384,15 +384,21 @@ export function initGallery(): void {
     if (e.key === 'ArrowRight') navigateLb(1)
   })
 
-  // Touch swipe - attached to lightbox itself (no lb-inner anymore)
-  let lbTouchX = 0
+  // A multi-touch gesture belongs to the browser so pinch-zoom can work.
+  let lbTouchX: number | null = null
   lightbox?.addEventListener('touchstart', e => {
-    lbTouchX = e.touches[0].clientX
+    lbTouchX = e.touches.length === 1 ? e.touches[0].clientX : null
   }, { passive: true })
   lightbox?.addEventListener('touchend', e => {
+    if (lbTouchX === null || e.touches.length !== 0 || e.changedTouches.length !== 1) {
+      lbTouchX = null
+      return
+    }
     const dx = e.changedTouches[0].clientX - lbTouchX
+    lbTouchX = null
     if (Math.abs(dx) > 40) navigateLb(dx < 0 ? 1 : -1)
   }, { passive: true })
+  lightbox?.addEventListener('touchcancel', () => { lbTouchX = null }, { passive: true })
 
   // Init
   updateProgress()
