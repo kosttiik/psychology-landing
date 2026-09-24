@@ -164,10 +164,10 @@
   position: relative;
   width: 100%;
   aspect-ratio: 7 / 5;
-  overflow: visible;
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
+  overflow: hidden;
+  background: #F8F7F3;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,9 +180,10 @@
     height: fit-content;
     max-width: 100%;
     max-height: 100%;
-    overflow: visible;
-    border-radius: 0;
+    overflow: hidden;
+    border-radius: 6px;
     line-height: 0;
+    box-shadow: 0 1px 2px rgba(44,62,53,0.08), 0 4px 10px rgba(44,62,53,0.1);
 
     img {
       max-width: 100%;
@@ -204,8 +205,6 @@
   }
 
 }
-
-.gallery__item[data-orientation='portrait'] .gallery__item-img { aspect-ratio: 7 / 10; }
 
 .gallery__item-label {
   font-family: var(--font-sans);
@@ -387,8 +386,9 @@
   max-width: 90vw;
   max-height: 78vh;
   object-fit: contain;
-  border: 0;
-  border-radius: 0;
+  border: 4px solid rgba(255,255,255,0.92);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.34);
   will-change: transform;
   user-select: none;
   -webkit-user-drag: none;
